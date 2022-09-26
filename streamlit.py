@@ -128,14 +128,15 @@ if page == pages[3]:
     st.write('## Viusalisation des données')
     
     fig = plt.figure(figsize = (10, 5))
-    sns.catplot(data = df_2013, x = 'Carburant', y = 'CO2 (g/km)', kind = 'box', height=5, aspect=2)
-    plt.title("Répartition de la distribution de l émission de CO2 en fonction du type d'énergie");
-    st.pyplot(fig)
+    sns.catplot(x = 'Carburant', y = 'CO2 (g/km)', kind = 'box', height=5, aspect=2, data = df_2013)
+    plt.title("Répartition de la distribution de l émission de CO2 en fonction du type d'énergie")
+    st.pyplot(fig);
     
 if page == pages[4]:
     
     st.write('## Machine Learning - Classification multiple')
     st.write('### Déterminer la classe du véhicule selon les normes européennes')
+    st.markdown('Les véhicules doivent être classés dans les catégories de A à G (du moins polluant au plus polluant) selon leurs émissions de CO2')
     
     df= pd.read_csv('ML_C02.csv', index_col = 0)
     # Le document ML_02.csv est le DataFrame obtenu après nettoyage et analyse du DataFrame initial df_2013.csv
@@ -159,8 +160,8 @@ if page == pages[4]:
     df = df.rename(variables, axis = 1)
 
     st.markdown('Le DataFrame comporte 5 variables numériques et 10 variables catégorielles')
-     
-
+    st.dataframe(df.info())
+    
     # On sépare les variables numériques et catégorielles
     var_num = df.select_dtypes(exclude = 'object') # On récupère les variables numériques
     var_cat = df.select_dtypes(include = 'object') # On récupère les variables catégorielles
@@ -171,10 +172,13 @@ if page == pages[4]:
 
     # Les variables catégorielles sont transformées en indicatrices
     var_cat_ind = pd.get_dummies(var_cat)
-    var_cat_ind
 
     # On récupère les variables explicatives
     feats = var_num.join(var_cat_ind)
+    
+    st.markdown('Distribution de la variable cible')
+    st.dataframe(target.value_counts(normalize = True))
+    st.markdown('On a une distribution légèrement déséquilibrée')
         
 
     # Commented out IPython magic to ensure Python compatibility.
@@ -207,7 +211,7 @@ if page == pages[4]:
     # %matplotlib inline
     import matplotlib.pyplot as plt
     import seaborn as sns
-
+    
     st.write('### **Cas 1 : Modélisation sans les variables qualitatives**')
 
     # On ne conserve que les variables quantitatives pour effectuer la modélisation
@@ -223,6 +227,8 @@ if page == pages[4]:
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
     
+    st.markdown('Nous procédons à une classification multiple. Nous avons donc choisi les classifieurs adaptés.')
+    st.markdown('Nous en avons sélectionné 3 pour cette étude: SVC, KNN et Random Forest')
     selection_modele = st.selectbox("Choix du modèle", options = ["SVC", "KNN", "Random Forest"])
     
     def train_model(selection_modele):
@@ -239,11 +245,59 @@ if page == pages[4]:
         y_pred = model.predict(X_test)
         score = model.score(X_test, y_test)
         
-        return score
+        st.write('La matrice de confusion obtenue :')
+        matrix = pd.crosstab(y_test, y_pred, rownames = ['Classes réelles'], colnames = ['Classes prédites'])
+        st.dataframe(matrix)
+        
+        if selection_modele == 'Random Forest':
+            feature_scores = pd.Series(model.feature_importances_, index=feats_quant.columns).sort_values(ascending=False)
+            fig = plt.figure(figsize = (10, 5))
+            sns.barplot(x=feature_scores, y=feature_scores.index)
+            plt.xlabel('Feature Importance Score')
+            plt.ylabel('Features')
+            plt.title("Visualisation des features les plus importants")
+            st.pyplot(fig);
+            
+        return score.round(2)
     
     st.write("L'accuracy du classifieur choisi est de", train_model(selection_modele))
+    
+    st.write("###### Voting Classifier")
+    
+    # Classifieur SVC
+    clf_svc2 = SVC(gamma = 'scale')        # Instanciation du classifieur
+    clf_svc2.fit(X_train, y_train)         # Entraînement du classifieur
+    y_pred_svc2 = clf_svc2.predict(X_test) # Prédictions du classifieur
+
+
+    # Classifieur KNN
+    clf_knn2 = KNeighborsClassifier()       # Instanciation du classifieur
+    clf_knn2.fit(X_train, y_train)          # Entraînement du classifieur
+    y_pred_knn2 = clf_knn2.predict(X_test)  # Prédictions du classifieur
+    
+    # Classifieur Random Forest
+    clf_rf2 = RandomForestClassifier()     # Instanciation du classifieur
+    clf_rf2.fit(X_train, y_train)          # Entraînement du classifieur
+    y_pred_rf2 = clf_rf2.predict(X_test)   # Prédictions du classifieur
+
+    # Voting Classifier
+    clf_vc2 = VotingClassifier([('rf', clf_rf2), ('svc', clf_svc2), ('knn', clf_knn2)], voting = 'hard')
+
+    # Création du cross-validator
+    cv3 = KFold(n_splits = 3) # Question : comment choisir les autres paramètres du CV? Comment définir le nombre optimal de splits?
+
+    st.markdown('Validation croisée et évaluation des classifieurs')
+    for clf, label in zip([clf_rf2, clf_svc2, clf_knn2, clf_vc2], ['Random Forest', 'SVC', 'KNN', 'Voting Classifier']):
+        scores = cross_validate(clf, feats_quant, target, cv=cv3, scoring=['accuracy','f1_weighted'])
+        st.write("[%s]: \n Accuracy: %0.2f (+/- %0.2f)" % (label, scores['test_accuracy'].mean(), scores['test_accuracy'].std()),
+              "F1 score: %0.2f (+/- %0.2f)" % (scores['test_f1_weighted'].mean(), scores['test_f1_weighted'].std()))
+
+    st.write('Suite au Voting Classifier, on constate que le modèle Random Forest est celui qui donne de bien meilleurs résultats')
+
+    
     '''
     st.write("##### Optimisation des hyperparamètres du classifieur choisi")
+    
     def optim_hyper(selection_modele):
         if selection_modele == "SVC":
             model = SVC(gamma = 'scale')
