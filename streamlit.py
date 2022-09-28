@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.express as px
 
 import streamlit as st
 
@@ -24,7 +25,7 @@ page = st.sidebar.radio('Aller vers', pages)
 
 # Emissions de polluants, CO2 et caractéristiques des véhicules
 # commercialisés en France en 2013
-df_2013 = pd.read_csv('data2013.csv' , sep = ';', encoding='unicode_escape')
+df_2013 = pd.read_csv('data_2013.csv',encoding='latin-1',sep=';')
 
 st.write('### Visualisation du dataset')
 st.dataframe(df_2013.head())
@@ -43,13 +44,18 @@ if page == pages[1]:
     st.markdown('La variable cible est CO2 (g/km)')
     #st.markdown('Il y a ', df_2013.duplicated().sum(), 'doublons dans le dataset') # On checke les doublons
     
+    st.markdown('Les variables explicatives sont : LISTE VARIABLES QUALIT ET QUANTI à regrouper par "famille"')
+    
     # Suppression des doublons
     df_2013 = df_2013.drop_duplicates()
     df_2013.duplicated().sum()
     
+    st.markdown('Traitement des valeurs manquantes')
+   
     st.write('### Etat des lieux des données')
     st.dataframe(df_2013.info())
     st.markdown('Beaucoup de valeurs manquantes pour les variables HC (g/km) et HC+NOX (g/km)')
+    
     
     if st.checkbox('Afficher les valeurs manquantes'):
         st.dataframe(df_2013.isna().sum())    
@@ -120,18 +126,44 @@ if page == pages[1]:
     # Création d'une colonne 'Cat' dans le DataFrame df_2013:
     df_2013['Cat'] = A 
 
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
 if page == pages[2]:
     st.write('## Analyse des données')
 
+st.markdown("Proposition de plan: Analyse des données \n")
+st.write("   1- Variable à expliquer : CO2, représentation graphique et répartition. traitement continue et discrétisée")
+st.write("   2- Variables explicatives : description")
+st.write("   3- relation entre varaibles explicatives et à expliquer")
+st.write("   4- Choix des variables pour la classification")
+st.write("   5- dédoublonnage final")
 
+st.write("La variable à expliquer : CO2")
+
+
+fig= px.box(df_2013['CO2 (g/km)'],x='CO2 (g/km)',title='Variable CO2 continue',notched=True)
+st.plotly_chart(fig)
+
+st.dataframe(df_2013.cat_poll)
+
+fig2= px.histogram(df_2013,x='Marque')
+st.plotly_chart(fig2)
+
+st.write("Les variables explicatives")
+
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
 if page == pages[3]:
-    st.write('## Viusalisation des données')
+    st.write('## Visualisation des données')
     
     fig = plt.figure(figsize = (10, 5))
     sns.catplot(data = df_2013, x = 'Carburant', y = 'CO2 (g/km)', kind = 'box', height=5, aspect=2)
     plt.title("Répartition de la distribution de l émission de CO2 en fonction du type d'énergie");
     st.pyplot(fig)
-    
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------    
 if page == pages[4]:
     
     st.write('## Machine Learning - Classification multiple')
