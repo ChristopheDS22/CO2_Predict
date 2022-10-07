@@ -9,22 +9,24 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
+
 
 # Titre du streamlit
 st.title('Projet CO2 Predict')
 
 # Sommaire du Sreamlit
 st.sidebar.title('Sommaire')
-pages = ['Introduction','Exploration des données', 'Analyse de données', 'Dataviz', 
+pages = ['Introduction','Exploration et analyse des données', 'Analyse de données - à supprimer', 'Dataviz - à supprimer', 
          'Modélisation : Classification multiple', 'Modélisation : Regréssion']
 
 page = st.sidebar.radio('Aller vers', pages)
 
 # Emissions de polluants, CO2 et caractéristiques des véhicules
 # commercialisés en France en 2013
-df_2013 = pd.read_csv('data2013.csv' , sep = ';', encoding='unicode_escape')
+df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
 
 st.write('### Visualisation du dataset')
 st.dataframe(df_2013.head())
@@ -40,19 +42,13 @@ if page == pages[0]:
 if page == pages[1]:
     st.write('## Exploration des données')
     
-    st.markdown('La variable cible est CO2 (g/km)')
+    st.markdown('La variable cible est CO2 (g/km). Elle peut être expliquée en tant que variable continue ou discrète')
     #st.markdown('Il y a ', df_2013.duplicated().sum(), 'doublons dans le dataset') # On checke les doublons
     
     # Suppression des doublons
     df_2013 = df_2013.drop_duplicates()
     df_2013.duplicated().sum()
     
-    st.write('### Etat des lieux des données')
-    st.dataframe(df_2013.info())
-    st.markdown('Beaucoup de valeurs manquantes pour les variables HC (g/km) et HC+NOX (g/km)')
-    
-    if st.checkbox('Afficher les valeurs manquantes'):
-        st.dataframe(df_2013.isna().sum())    
     
     # Remplacement des valeurs manquantes des 'EL' par 0:
     df_2013['CO2 (g/km)'] = df_2013['CO2 (g/km)'].fillna(0)
@@ -74,9 +70,7 @@ if page == pages[1]:
     # On vérifie le remplacement des valeurs manquantes des variables numériques
     df_2013.isna().sum()
     
-    st.write('#### Description statistique des données')
-    st.dataframe(df_2013.describe())
-    st.markdown('Les ordres de grandeurs sont très larges : il sera nécessaire de procéder à une standardisation des valeurs')
+
     
     # Harmonisation des nomenclatures de carburants
     df_2013['Carburant'] = df_2013['Carburant'].replace(to_replace = ['GN/ES', 'GP/ES'], value = ['ES/GN', 'ES/GP'])
@@ -88,12 +82,7 @@ if page == pages[1]:
     # Extraction des variables quantitatives
     df_quant = df_2013[['Puissance administrative', 'Puissance maximale (kW)', 'Consommation urbaine (l/100km)', 'Consommation extra-urbaine (l/100km)', 'Consommation mixte (l/100km)', 'CO2 (g/km)', 'CO type I (g/km)', 'Particules (g/km)', 'NOX (g/km)', 'masse vide euro min (kg)', 'masse vide euro max (kg)']]
 
-    
-    st.markdown('#### Corrélation des variables selon Pearson')
-    st.dataframe(df_quant.corr())
-    st.markdown("Il apparaît qu'il y a une forte corrélation entre les différents types de consommation et les émissions de CO2")
-    st.markdown("Il y a aussi une corrélation marquée entre les masses des véhicules (min et max) et les émissions de CO2")
-    st.markdown("La variable HC+NOX (g/km) n'a pas été retenue car elle a trop de valeurs manquantes")
+
     
     # Création d'une variable catégorielle 'Cat' selon la norme européenne de pollution des véhicules:
 
@@ -119,6 +108,80 @@ if page == pages[1]:
 
     # Création d'une colonne 'Cat' dans le DataFrame df_2013:
     df_2013['Cat'] = A 
+
+#------------------------------
+#partie streamlit des représentations
+#------------------------------
+
+    st.write('### Variable à expliquer')
+
+
+    fig=px.box(df_2013['CO2 (g/km)'],x='CO2 (g/km)',title='Variable CO2 continue',notched=True)
+    st.plotly_chart(fig)
+
+    fig2= px.histogram(df_2013,title='Variable CO2 discrète',x='Cat',category_orders=dict(Cat=['A','B','C','D','E','F','G']))
+    st.plotly_chart(fig2)
+    
+ #   from plotly.subplots import make_subplots
+#essais avec subplots
+#    fig3=make_subplots(rows=1,cols=2)
+#    fig3.add_trace(
+#        go.box(df_2013['CO2 (g/km)']),row=1,col=1
+#        )
+#    fig3.add_trace(
+#        go.scatter(x=[20, 30, 40], y=[50, 60, 70]),
+#    row=1, col=2
+#    )
+#    fig.update_layout(height=600, width=800, title_text="Side By Side Subplots")
+#    fig.show()
+#    fig = make_subplots(rows=1, cols=2)
+
+    st.write('### Variables explicatives')
+    st.write('Il y a deux types de variables explicatives : qualitatives et quantitatives')
+
+   
+    var_num_2013 = df_2013.select_dtypes(exclude = 'object') # On récupère les variables numériques
+    var_cat_2013 = df_2013.select_dtypes(include = 'object') # On récupère les variables catégorielles
+
+    tab_num=pd.DataFrame(var_num_2013.columns,columns=['Quantitatives'])
+    tab_cat=pd.DataFrame(var_cat_2013.columns,columns=['Qualitatives'])
+    
+    st.dataframe(pd.concat([tab_num,tab_cat],axis=0))
+
+    st.write('Variables quantitatives')
+
+
+
+    st.write('Variables qualitatives')
+
+    fig_mq= px.histogram(df_2013,title='Répartition par marque',y='Marque').update_yaxes(categoryorder='total ascending')
+    st.plotly_chart(fig_mq)
+    st.write('on observe une sur-représentation de Mercedes-Benz dans le dataframe')
+
+
+
+    st.write('### Etat des lieux des données')
+    st.dataframe(df_2013.info())
+    st.markdown('Beaucoup de valeurs manquantes pour les variables HC (g/km) et HC+NOX (g/km)')
+    
+    if st.checkbox('Afficher les valeurs manquantes'):
+        st.dataframe(df_2013.isna().sum())  
+
+    st.write('#### Description statistique des données')
+    st.dataframe(df_2013.describe())
+    st.markdown('Les ordres de grandeurs sont très larges : il sera nécessaire de procéder à une standardisation des valeurs')
+
+    
+    st.markdown('#### Corrélation des variables selon Pearson')
+    st.dataframe(df_quant.corr())
+    st.markdown("Il apparaît qu'il y a une forte corrélation entre les différents types de consommation et les émissions de CO2")
+    st.markdown("Il y a aussi une corrélation marquée entre les masses des véhicules (min et max) et les émissions de CO2")
+    st.markdown("La variable HC+NOX (g/km) n'a pas été retenue car elle a trop de valeurs manquantes")
+
+
+
+
+
 
 if page == pages[2]:
     st.write('## Analyse des données')
