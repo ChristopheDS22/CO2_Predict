@@ -12,7 +12,8 @@ import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-
+import plotly.io as pio
+import plotly.figure_factory as ff
 
 # Titre du streamlit
 st.title('Projet CO2 Predict')
@@ -137,8 +138,8 @@ if page == pages[1]:
 #    fig = make_subplots(rows=1, cols=2)
 
     st.write('### Variables explicatives')
-    st.write('Il y a deux types de variables explicatives : qualitatives et quantitatives')
-
+    st.write('Deux types de variables explicatives sont disponibles : 11 qualitatives et 13 quantitatives')
+    st.caption('Certaines variables sont redondantes (colorées de la même façon ci-dessous)')
    
     var_num_2013 = df_2013.select_dtypes(exclude = 'object') # On récupère les variables numériques
     var_cat_2013 = df_2013.select_dtypes(include = 'object') # On récupère les variables catégorielles
@@ -146,22 +147,22 @@ if page == pages[1]:
     tab_num=pd.DataFrame(var_num_2013.columns,columns=['Quantitatives'])
     tab_cat=pd.DataFrame(var_cat_2013.columns,columns=['Qualitatives'])
     
-    st.dataframe(pd.concat([tab_num,tab_cat],axis=0))
-
+    # table pour présenter les données qualitatives et quantitatives
+    table1 = pd.concat([tab_num,tab_cat],axis=1).fillna('')
+    
+    #on définit des couleurs identiques poru les variables semblables
+    def couleur1(val):
+        color='white' if val not in ('Modèle UTAC' 'Modèle dossier' 'Désignation commerciale') else 'paleturquoise'
+        return 'background-color:%s' % color
+    
+    st.dataframe(table1.style.applymap(couleur1))
+    
+    st.caption('La variable "Champ V9" est une variable qui contient plusieurs informations sur le véhicule')
+    
     st.write('Variables quantitatives')
 
-
-
-    st.write('Variables qualitatives')
-
-    fig_mq= px.histogram(df_2013,title='Répartition par marque',y='Marque').update_yaxes(categoryorder='total ascending')
-    st.plotly_chart(fig_mq)
-    st.write('on observe une sur-représentation de Mercedes-Benz dans le dataframe')
-
-
-
-    st.write('### Etat des lieux des données')
-    st.dataframe(df_2013.info())
+  
+    #st.dataframe(df_2013.info())
     st.markdown('Beaucoup de valeurs manquantes pour les variables HC (g/km) et HC+NOX (g/km)')
     
     if st.checkbox('Afficher les valeurs manquantes'):
@@ -173,13 +174,62 @@ if page == pages[1]:
 
     
     st.markdown('#### Corrélation des variables selon Pearson')
-    st.dataframe(df_quant.corr())
+    #st.dataframe(df_quant.corr())
+    # Corrélation entre les variables : affichage de la heatmap
+    df_corr=var_num_2013.corr()
+    mask = np.triu(np.ones_like(df_corr, dtype=np.bool))
+  
+   
+    x = list(df_corr.columns)
+    y = list(df_corr.index)
+    z = df_corr.mask(mask).to_numpy()
+   
+
+    fig6 = ff.create_annotated_heatmap(
+    z,
+    x = x,
+    y = y ,
+    annotation_text = np.around(z, decimals=2),
+    hoverinfo='none',
+    showscale=True
+    )
+    
+    fig6.update_layout(
+    title_text='Heatmap des corrélations entre variables quantitatives', 
+    title_x=0.5, 
+    width=700, 
+    height=700,
+    xaxis_showgrid=False,
+    yaxis_showgrid=False,
+    xaxis_zeroline=False,
+    yaxis_zeroline=False,
+    yaxis_autorange='reversed',
+    template='plotly_white'
+    )
+    fig6.update_xaxes(side="bottom")
+    
+    # NaN values are not handled automatically and are displayed in the figure
+    # So we need to get rid of the text manually
+    for i in range(len(fig6.layout.annotations)):
+        if fig6.layout.annotations[i].text == 'nan':
+            fig6.layout.annotations[i].text = ""
+    
+    st.write(fig6)    
+    
+    
+    
     st.markdown("Il apparaît qu'il y a une forte corrélation entre les différents types de consommation et les émissions de CO2")
     st.markdown("Il y a aussi une corrélation marquée entre les masses des véhicules (min et max) et les émissions de CO2")
     st.markdown("La variable HC+NOX (g/km) n'a pas été retenue car elle a trop de valeurs manquantes")
 
 
+    st.write('Variables qualitatives')
 
+    fig_mq= px.histogram(df_2013,title='Répartition par marque',y='Marque').update_yaxes(categoryorder='total ascending')
+    st.plotly_chart(fig_mq)
+    st.write('on observe une sur-représentation de Mercedes-Benz dans le dataframe')
+
+    st.write('### Valeurs manquantes')
 
 
 
