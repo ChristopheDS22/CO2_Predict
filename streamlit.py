@@ -407,68 +407,70 @@ if page == pages[4]:
 
     st.write('Suite au Voting Classifier, on constate que le modèle Random Forest est celui qui donne de bien meilleurs résultats')
 
-    
-    '''
     st.write("##### Optimisation des hyperparamètres du classifieur choisi")
     
-    def optim_hyper(selection_modele):
-        if selection_modele == "SVC":
-            model = SVC(gamma = 'scale')
-            # Création d'un dictionnaire de parametres contenant les valeurs possibles prises pour les paramètres 
-            #C:doit être strictement positif
-            #kernel a 5 possibilités décrites, mais quand on utilise 'precomputed', cela ne fonctionne pas
-            # gamma:'scale' 'auto' ou des nombres décimaux
-            parametres= {
-                    'C':[1,50,100,200],
-                'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
-                'gamma':[0.1, 0.5,1]
-            }             
-
-                       
-        if selection_modele == "KNN":
-            model = KNeighborsClassifier()
-            
-            # Création d'un dictionnaire de parametres contenant les valeurs possibles prises pour les paramètres 
-            #C:doit être strictement positif
-            #kernel a 5 possibilités décrites, mais quand on utilise 'precomputed', cela ne fonctionne pas
-            # gamma:'scale' 'auto' ou des nombres décimaux
-            parametres= {
-                'leaf_size':list(range(1,5)),
-                'n_neighbors': list(range(1,10)),
-                'p':[1,2],
-                'metric': ['minkowski','manhattan','chebyshev']
-            }
-            
-        if selection_modele == "Random Forest":
-            model = RandomForestClassifier()
-            # Création d'un dictionnaire de parametres contenant les valeurs possibles prises pour les paramètres 
-            #C:doit être strictement positif
-            #kernel a 5 possibilités décrites, mais quand on utilise 'precomputed', cela ne fonctionne pas
-            # gamma:'scale' 'auto' ou des nombres décimaux
-            parametres= {
-                'n_estimators':[200,300,400,500,600,700],
-                'criterion': ['gini', 'entropy'],
-                'max_features': ['auto', 'sqrt', 'log2'],
-                #'random_state': [i for i in range(0, 101)]               
-            }
-            
-        #on applique la fonction gridsearch au modèle sélectionné
-        grid=GridSearchCV(model,parametres)
-
-        #on entraîne grid sur l'ensemble d'entraînement
-        grille=grid.fit(X_train, y_train)
-                   
-        #on refait les prédictions de classe avec les paramètres optimisés
-        y_pred_grid =grid.predict(X_test) # Prédictions du classifieur
-
-        # Matrice de confusion
-        matrice = pd.crosstab(y_test, y_pred_grid, rownames = ['Classes réelles'], colnames = ['Classes prédites SVC'])
-        
-        # Score
-        acc_grid = accuracy_score(y_test, y_pred_grid)
-        
-        return st.write('Le score du modèle', acc_grid)
-        #st.write('les meilleurs paramètres sont',grille.best_params_), st.dataframe(matrice)
-
-    st.write('Résultats optimisés', optim_hyper(selection_modele))
+    st.markdown('On cherche à optimiser les classifieurs en sélectionnant les meilleurs hyperparamètres')
+    
+    st.write("###### Classifieur SVC")
+    st.markdown(" Nous avons fait fait varier les hyperparamètres selon le dictionnaire suivant:")  
     '''
+    parametres_svc = {
+            'C':[1,50,100,200],
+        'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
+        'gamma':[0.1, 0.5,1]
+    }
+    
+    '''
+    st.markdown("Après un GridSearchCV, les meilleurs paramètres pour le SVC sont  {'C': 100, 'gamma': 1, 'kernel': 'rbf'}")
+    # On refait la classification avec les paramètres optimisés
+    clf_svc_optim = SVC(C = 100, gamma = 1, kernel = 'rbf')
+    clf_svc_optim.fit(X_train, y_train)
+    y_pred_svc_optim = clf_svc_optim.predict(X_test)
+    
+    st.markdown('*Matrice de confusion du SVC optimisé*')
+    matrix_optim = pd.crosstab(y_test, y_pred_svc_optim, rownames = ['Classes réelles'], colnames = ['Classes prédites SVC'])
+    st.dataframe(matrix_optim)
+    st.write("L'accuracy du classifieur SVC optimisé est de:",accuracy_score(y_test, y_pred_svc_optim).round(2))
+    
+    st.write("###### Classifieur KNN")
+    st.markdown(" Nous avons fait fait varier les hyperparamètres suivants:")  
+    '''
+    parametres_knn = {
+        'leaf_size':list(range(1,5)),
+        'n_neighbors': list(range(1,10)),
+        'p':[1,2],
+        'metric': ['minkowski','manhattan','chebyshev']
+    }
+    
+    '''
+    st.markdown("Après un GridSearchCV, les meilleurs paramètres pour le KNN sont  {'leaf_size': 4, 'metric': 'minkowski', 'n_neighbors': 1, 'p': 1}")
+    # On refait la classification avec les paramètres optimisés
+    clf_knn_optim = KNeighborsClassifier(n_neighbors = 1, leaf_size = 4, metric = 'minkowski', p = 1)
+    clf_knn_optim.fit(X_train, y_train)
+    y_pred_knn_optim = clf_knn_optim.predict(X_test)
+    
+    st.markdown('*Matrice de confusion du KNN optimisé*')
+    matrix_optim = pd.crosstab(y_test, y_pred_knn_optim, rownames = ['Classes réelles'], colnames = ['Classes prédites KNN'])
+    st.dataframe(matrix_optim)
+    st.write("L'accuracy du classifieur KNN optimisé est de:",accuracy_score(y_test, y_pred_knn_optim).round(2))
+    
+    st.write("###### Classifieur Random Forest")
+    st.markdown(" Nous avons fait fait varier les hyperparamètres suivants:")  
+    '''
+    parametres_rf= {
+        'n_estimators':[200,300,400,500,600,700],
+        'criterion': ['gini', 'entropy'],
+        'max_features': ['auto', 'sqrt', 'log2']              
+    }
+    
+    '''
+    st.markdown("Après un GridSearchCV, les meilleurs paramètres pour le Random Forest sont {'criterion': 'entropy', 'max_features': 'log2', 'n_estimators': 600}")
+    # On refait la classification avec les paramètres optimisés
+    clf_rf_optim = RandomForestClassifier(n_estimators = 600, criterion = 'entropy', max_features = 'log2')
+    clf_rf_optim.fit(X_train, y_train)
+    y_pred_rf_optim = clf_rf_optim.predict(X_test)
+    
+    st.markdown('*Matrice de confusion du Random Forest optimisé*')
+    matrix_optim = pd.crosstab(y_test, y_pred_rf_optim, rownames = ['Classes réelles'], colnames = ['Classes prédites Random Forest'])
+    st.dataframe(matrix_optim)
+    st.write("L'accuracy du classifieur Random Forest optimisé est de:",accuracy_score(y_test, y_pred_rf_optim).round(2))
