@@ -162,28 +162,7 @@ df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
     # Le df ainsi obtenu pour la modélisation est enregistré dans un nouveau document ML_CO2.csv
     # Il sera utilisé pour la modélisation
     
-    #------------------------------
-    #partie streamlit des représentations
-    #------------------------------
 
-
-
-
-
-    
- #   from plotly.subplots import make_subplots
-#essais avec subplots
-#    fig3=make_subplots(rows=1,cols=2)
-#    fig3.add_trace(
-#        go.box(df_2013['CO2 (g/km)']),row=1,col=1
-#        )
-#    fig3.add_trace(
-#        go.scatter(x=[20, 30, 40], y=[50, 60, 70]),
-#    row=1, col=2
-#    )
-#    fig.update_layout(height=600, width=800, title_text="Side By Side Subplots")
-#    fig.show()
-#    fig = make_subplots(rows=1, cols=2)
 
 
 
@@ -387,9 +366,9 @@ df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
     
     
     
-    
+    #---------------------------------------------------------------------------------------------------------
     #------------------------------------------------- Streamlit -------------------------------------------
-    
+    #---------------------------------------------------------------------------------------------------------
     
     
 # Titre du streamlit
@@ -544,3 +523,22 @@ if page == pages[3]:
     st.markdown('Nous procédons à une classification multiple. Nous avons donc choisi les classifieurs adaptés.')
     st.markdown('Nous en avons sélectionné 3 pour cette étude: SVC, KNN et Random Forest')
     selection_modele = st.selectbox("Choix du modèle", options = ["SVC", "KNN", "Random Forest"])
+    
+    #------------------------------
+    #partie streamlit des représentations
+    #------------------------------
+
+    
+ #   from plotly.subplots import make_subplots
+#essais avec subplots
+#    fig3=make_subplots(rows=1,cols=2)
+#    fig3.add_trace(
+#        go.box(df_2013['CO2 (g/km)']),row=1,col=1
+#        )
+#    fig3.add_trace(
+#        go.scatter(x=[20, 30, 40], y=[50, 60, 70]),
+#    row=1, col=2
+#    )
+#    fig.update_layout(height=600, width=800, title_text="Side By Side Subplots")
+#    fig.show()
+#    fig = make_subplots(rows=1, cols=2)
