@@ -22,7 +22,7 @@ df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
 
 
     #on renomme les variables pour plus de facilité d'utilisation
-    variables = {'Modèle dossier' : 'modele_dossier',
+variables = {'Modèle dossier' : 'modele_dossier',
              'Modèle UTAC':'modele_UTAC',
              'Désignation commerciale':'design_comm',
              'Type Variante Version (TVV)':'TVV',
@@ -45,120 +45,120 @@ df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
             }
 
 
-    df_2013 = df_2013.rename(variables, axis = 1)
+df_2013 = df_2013.rename(variables, axis = 1)
     
     # Suppression des doublons
-    df_2013 = df_2013.drop_duplicates()
-    df_2013.duplicated().sum()
+df_2013 = df_2013.drop_duplicates()
+df_2013.duplicated().sum()
     
 
     # Variable 'Marque'
     # Répartition des voitures par marques
-    df_2013.Marque.value_counts()
+df_2013.Marque.value_counts()
     
     #Variables 'Modèle dossier' et 'Modèle UTAC'
     # Les variables modele_dossier et modele_UTAC semblent assez similaires : quelle est la différence?
-    pd.crosstab(df_2013.modele_dossier,df_2013.modele_UTAC)
+pd.crosstab(df_2013.modele_dossier,df_2013.modele_UTAC)
 
-    test_mod=df_2013[-(df_2013.modele_dossier==df_2013.modele_UTAC)]
-    pd.crosstab(test_mod.modele_dossier,test_mod.modele_UTAC)
+test_mod=df_2013[-(df_2013.modele_dossier==df_2013.modele_UTAC)]
+pd.crosstab(test_mod.modele_dossier,test_mod.modele_UTAC)
 
     # Variables 'designation commerciale', 'CNIT', et 'TVV'
     # On créé des nouvelles variables qu'on enrichira des valeurs ci-desous
-    df_2013.insert(5,'cat','T')
-    df_2013.insert(6,'mq','T')
-    df_2013.insert(7,'genre','T')
+df_2013.insert(5,'cat','T')
+df_2013.insert(6,'mq','T')
+df_2013.insert(7,'genre','T')
     
     #la variable CNIT génère beaucoup de doublons, à quoi correspond-t-elle?
     #les 3 premiers caractères représentent la catégorie
-    df_2013.cat=df_2013.CNIT.str[:3]
+df_2013.cat=df_2013.CNIT.str[:3]
 
     #les 3 suivants sont la marque
-    df_2013.mq=df_2013.CNIT.str[3:6]
+df_2013.mq=df_2013.CNIT.str[3:6]
 
     #les 2 suivants le genre (VP dans la majeure partie des cas)
-    df_2013.genre=df_2013.CNIT.str[6:8]
+df_2013.genre=df_2013.CNIT.str[6:8]
 
 
     #Variable 'Carburant'
     # Harmonisation des nomenclatures de carburants
-    df_2013['Carburant'] = df_2013['Carburant'].replace(to_replace = ['GN/ES', 'GP/ES'], value = ['ES/GN', 'ES/GP'])
+df_2013['Carburant'] = df_2013['Carburant'].replace(to_replace = ['GN/ES', 'GP/ES'], value = ['ES/GN', 'ES/GP'])
     
     #Variable Hybride
     # Répartition des véhicules hybrides
-    df_2013.Hybride.value_counts()
+df_2013.Hybride.value_counts()
     
     # Variable 'boite0'
     # Il faut éclater la variable boite0 en 2 : type de boîte d'un côté et nombre de rapports de l'autre
     # On créé des nouvelles variables qu'on enrichira des valeurs ci-desous
 
-    df_2013[['boite', 'rapport']]=df_2013.boite0.str.split(expand=True)
+df_2013[['boite', 'rapport']]=df_2013.boite0.str.split(expand=True)
     
     # Suppression des boites 'S', 'V' et 'N' (boîtes indéfinissables)
-    df_2013 = df_2013[df_2013['boite']!='S']
-    df_2013 = df_2013[df_2013['boite']!='V']
-    df_2013 = df_2013[df_2013['boite']!='N']
+df_2013 = df_2013[df_2013['boite']!='S']
+df_2013 = df_2013[df_2013['boite']!='V']
+df_2013 = df_2013[df_2013['boite']!='N']
 
     # La modalité D semble être automatique
-    df_2013['boite'].replace(to_replace = ['D'], value = 'A', inplace = True)
+df_2013['boite'].replace(to_replace = ['D'], value = 'A', inplace = True)
     
     # Variable V9
     # Exploitation de la variable Champ V9 : permet de ressortir la norme EURO
-    df_2013['champ_V9'].replace(to_replace = [np.nan], value = [df_2013['champ_V9'].mode()], inplace = True) # Remplacement des valeurs manquantes par le mode
-    df_2013['norme_EURO'] = df_2013['champ_V9'].apply(lambda x: x[-5:])
+df_2013['champ_V9'].replace(to_replace = [np.nan], value = [df_2013['champ_V9'].mode()], inplace = True) # Remplacement des valeurs manquantes par le mode
+df_2013['norme_EURO'] = df_2013['champ_V9'].apply(lambda x: x[-5:])
 
     # Variable 'Gamme du véhicule'
     # On modifie les labels qui ne ne sont pas corrects et on les harmonise
-    def change_gamme(x):
-        if x in ['MOY-INFERIEURE','MOY-INFER','MOY-INF']:
-            return('MOY-INFERIEURE')
-        if x in ['MOY-SUPER']:
-            return('MOY-SUPERIEURE')
-        else : return(x)
+def change_gamme(x):
+    if x in ['MOY-INFERIEURE','MOY-INFER','MOY-INF']:
+        return('MOY-INFERIEURE')
+    if x in ['MOY-SUPER']:
+        return('MOY-SUPERIEURE')
+    else : return(x)
 
 
-    df_2013['gamme2']=df_2013.gamme.apply(change_gamme)
+df_2013['gamme2']=df_2013.gamme.apply(change_gamme)
 
     
 
-    df_2013['CO2'] = df_2013['CO2'].fillna(0)
+df_2013['CO2'] = df_2013['CO2'].fillna(0)
     
     # Les valeurs manquantes de consommation semblent coller avec celles des véhicules électriques
-    df_2013['conso_urb'] = df_2013['conso_urb'].fillna(0)
-    df_2013['conso_extra_urb'] = df_2013['conso_extra_urb'].fillna(0)
-    df_2013['conso_mixte'] = df_2013['conso_mixte'].fillna(0)
+df_2013['conso_urb'] = df_2013['conso_urb'].fillna(0)
+df_2013['conso_extra_urb'] = df_2013['conso_extra_urb'].fillna(0)
+df_2013['conso_mixte'] = df_2013['conso_mixte'].fillna(0)
 
 
-    df_2013['NOX'] = df_2013['NOX'].fillna(df_2013['NOX'].mean())
-    df_2013['hcnox'] = df_2013['hcnox'].fillna(df_2013['hcnox'].mean())
-    df_2013['particules'] = df_2013['particules'].fillna(df_2013['particules'].mean())
-    df_2013['CO2_type_1'] = df_2013['CO2_type_1'].fillna(df_2013['CO2_type_1'].mean())
+df_2013['NOX'] = df_2013['NOX'].fillna(df_2013['NOX'].mean())
+df_2013['hcnox'] = df_2013['hcnox'].fillna(df_2013['hcnox'].mean())
+df_2013['particules'] = df_2013['particules'].fillna(df_2013['particules'].mean())
+df_2013['CO2_type_1'] = df_2013['CO2_type_1'].fillna(df_2013['CO2_type_1'].mean())
 
    
-    df_2013 = df_2013.drop(['HC'], axis = 1)
+df_2013 = df_2013.drop(['HC'], axis = 1)
 
 
     
     # Création d'une variable Cat_CO2 pour la classification des véhicules
-    label = pd.cut(df_2013.CO2,
+label = pd.cut(df_2013.CO2,
                    bins = [-1,100,120,140,160,200,249,600],
                    labels = ['A','B','C','D','E', 'F','G'])
     
-    df_2013['Cat_CO2'] = label 
+df_2013['Cat_CO2'] = label 
 
    
 
 
-    df = df_2013.drop(columns = ['modele_UTAC', 'modele_dossier', 'design_comm', 'CNIT', "TVV", 'puissance_adm', 'Hybride',
+df = df_2013.drop(columns = ['modele_UTAC', 'modele_dossier', 'design_comm', 'CNIT', "TVV", 'puissance_adm', 'Hybride',
                               'boite0', 'conso_urb', 'conso_extra_urb', 'conso_mixte', 'CO2_type_1', 'NOX', 'hcnox', 'norme_EURO',
                               'particules','masse_ordma_max', 'champ_V9', 'date_maj','gamme', 'rapport','cat', 'mq', 'genre'])
 
     # et on supprime les doublons
-    df = df.drop_duplicates()
+df = df.drop_duplicates()
 
 
     
-    df.to_csv('Model_C02.csv')
+df.to_csv('Model_C02.csv')
     # Le df ainsi obtenu pour la modélisation est enregistré dans un nouveau document ML_CO2.csv
     # Il sera utilisé pour la modélisation
     
@@ -167,73 +167,73 @@ df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
 
 
    
-    var_num_2013 = df_2013.select_dtypes(exclude = 'object') # On récupère les variables numériques
-    var_cat_2013 = df_2013.select_dtypes(include = 'object') # On récupère les variables catégorielles
+var_num_2013 = df_2013.select_dtypes(exclude = 'object') # On récupère les variables numériques
+var_cat_2013 = df_2013.select_dtypes(include = 'object') # On récupère les variables catégorielles
 
-    tab_num=pd.DataFrame(var_num_2013.columns,columns=['Quantitatives'])
-    tab_cat=pd.DataFrame(var_cat_2013.columns,columns=['Qualitatives'])
+tab_num=pd.DataFrame(var_num_2013.columns,columns=['Quantitatives'])
+tab_cat=pd.DataFrame(var_cat_2013.columns,columns=['Qualitatives'])
     
 
         
     # On sépare les variables numériques et catégorielles
-    var_num = df.select_dtypes(exclude = 'object') # On récupère les variables numériques
-    var_cat = df.select_dtypes(include = 'object') # On récupère les variables catégorielles
+var_num = df.select_dtypes(exclude = 'object') # On récupère les variables numériques
+var_cat = df.select_dtypes(include = 'object') # On récupère les variables catégorielles
 
     # On récupère les variables cibles
-    target_reg = df['CO2']                         # Variable cible pour la regression
-    target_class = df['Cat_CO2']                   # Variable cible pour la classification
+target_reg = df['CO2']                         # Variable cible pour la regression
+target_class = df['Cat_CO2']                   # Variable cible pour la classification
 
-    var_num = var_num.drop(['Cat_CO2', 'CO2'], axis = 1)  # Les variables cibles sont éliminées des variables numériques
+var_num = var_num.drop(['Cat_CO2', 'CO2'], axis = 1)  # Les variables cibles sont éliminées des variables numériques
     
  
 
     # Les variables catégorielles sont transformées en indicatrices
-    var_cat_ind = pd.get_dummies(var_cat)
+var_cat_ind = pd.get_dummies(var_cat)
 
     # On récupère les variables explicatives
-    feats = var_num.join(var_cat_ind)
+feats = var_num.join(var_cat_ind)
     
 
         
 
     # Commented out IPython magic to ensure Python compatibility.
     # Les différents types de modèles de Machine Learning
-    from sklearn.svm import SVC
-    from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-    from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
     # Les fonctions de paramétrage de la modélisation
-    from sklearn.model_selection import train_test_split, KFold, cross_validate
-    from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split, KFold, cross_validate
+from sklearn.model_selection import GridSearchCV
 
     # Les fonctions de preprocessing
-    from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler
          
     # Les métriques
-    from sklearn.metrics import f1_score
-    from sklearn.metrics import accuracy_score
-    from sklearn.metrics import classification_report
-    from sklearn.model_selection import cross_val_predict, cross_val_score, cross_validate
+from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
+from sklearn.model_selection import cross_val_predict, cross_val_score, cross_validate
 
     # Les fonctions de sauvegarde et chargement de modèles
-    from joblib import dump, load
+from joblib import dump, load
 
     #la visualisation
     # %matplotlib inline
-    import matplotlib.pyplot as plt
-    import seaborn as sns    
+import matplotlib.pyplot as plt
+import seaborn as sns    
 
     # Séparation en données d'entraînement et de test
-    X_train, X_test, y_train, y_test = train_test_split(feats, target_class, test_size = 0.25)
+X_train, X_test, y_train, y_test = train_test_split(feats, target_class, test_size = 0.25)
 
     # Les variables numériques doivent être standardisées
-    scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
-    
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
 
     
-    def train_model(selection_modele):
+def train_model(selection_modele):
         if selection_modele == "SVC":
             model = SVC(gamma = 'scale')
             
@@ -262,107 +262,107 @@ df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
             
         return score.round(2)
     
-    st.write("L'accuracy du classifieur choisi est de", train_model(selection_modele))
+#st.write("L'accuracy du classifieur choisi est de", train_model(selection_modele))
     
-    st.write("###### Voting Classifier")
+st.write("###### Voting Classifier")
     
     # Classifieur SVC
-    clf_svc2 = SVC(gamma = 'scale')        # Instanciation du classifieur
-    clf_svc2.fit(X_train, y_train)         # Entraînement du classifieur
-    y_pred_svc2 = clf_svc2.predict(X_test) # Prédictions du classifieur
+clf_svc2 = SVC(gamma = 'scale')        # Instanciation du classifieur
+clf_svc2.fit(X_train, y_train)         # Entraînement du classifieur
+y_pred_svc2 = clf_svc2.predict(X_test) # Prédictions du classifieur
 
 
     # Classifieur KNN
-    clf_knn2 = KNeighborsClassifier()       # Instanciation du classifieur
-    clf_knn2.fit(X_train, y_train)          # Entraînement du classifieur
-    y_pred_knn2 = clf_knn2.predict(X_test)  # Prédictions du classifieur
+clf_knn2 = KNeighborsClassifier()       # Instanciation du classifieur
+clf_knn2.fit(X_train, y_train)          # Entraînement du classifieur
+y_pred_knn2 = clf_knn2.predict(X_test)  # Prédictions du classifieur
     
     # Classifieur Random Forest
-    clf_rf2 = RandomForestClassifier()     # Instanciation du classifieur
-    clf_rf2.fit(X_train, y_train)          # Entraînement du classifieur
-    y_pred_rf2 = clf_rf2.predict(X_test)   # Prédictions du classifieur
+clf_rf2 = RandomForestClassifier()     # Instanciation du classifieur
+clf_rf2.fit(X_train, y_train)          # Entraînement du classifieur
+y_pred_rf2 = clf_rf2.predict(X_test)   # Prédictions du classifieur
 
     # Voting Classifier
-    clf_vc2 = VotingClassifier([('rf', clf_rf2), ('svc', clf_svc2), ('knn', clf_knn2)], voting = 'hard')
+clf_vc2 = VotingClassifier([('rf', clf_rf2), ('svc', clf_svc2), ('knn', clf_knn2)], voting = 'hard')
 
     # Création du cross-validator
-    cv3 = KFold(n_splits = 3) # Question : comment choisir les autres paramètres du CV? Comment définir le nombre optimal de splits?
+cv3 = KFold(n_splits = 3) # Question : comment choisir les autres paramètres du CV? Comment définir le nombre optimal de splits?
 
-    st.markdown('Validation croisée et évaluation des classifieurs')
-    for clf, label in zip([clf_rf2, clf_svc2, clf_knn2, clf_vc2], ['Random Forest', 'SVC', 'KNN', 'Voting Classifier']):
+st.markdown('Validation croisée et évaluation des classifieurs')
+for clf, label in zip([clf_rf2, clf_svc2, clf_knn2, clf_vc2], ['Random Forest', 'SVC', 'KNN', 'Voting Classifier']):
         scores = cross_validate(clf, feats_quant, target, cv=cv3, scoring=['accuracy','f1_weighted'])
         st.write("[%s]: \n Accuracy: %0.2f (+/- %0.2f)" % (label, scores['test_accuracy'].mean(), scores['test_accuracy'].std()),
               "F1 score: %0.2f (+/- %0.2f)" % (scores['test_f1_weighted'].mean(), scores['test_f1_weighted'].std()))
 
-    st.write('Suite au Voting Classifier, on constate que le modèle Random Forest est celui qui donne de bien meilleurs résultats')
+st.write('Suite au Voting Classifier, on constate que le modèle Random Forest est celui qui donne de bien meilleurs résultats')
 
-    st.write("##### Optimisation des hyperparamètres du classifieur choisi")
+st.write("##### Optimisation des hyperparamètres du classifieur choisi")
     
-    st.markdown('On cherche à optimiser les classifieurs en sélectionnant les meilleurs hyperparamètres')
+st.markdown('On cherche à optimiser les classifieurs en sélectionnant les meilleurs hyperparamètres')
     
-    st.write("###### Classifieur SVC")
-    st.markdown(" Nous avons fait fait varier les hyperparamètres selon le dictionnaire suivant:")  
-    '''
-    parametres_svc = {
-            'C':[1,50,100,200],
-        'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
-        'gamma':[0.1, 0.5,1]
-    }
-    
-    '''
-    st.markdown("Après un GridSearchCV, les meilleurs paramètres pour le SVC sont  {'C': 100, 'gamma': 1, 'kernel': 'rbf'}")
+st.write("###### Classifieur SVC")
+st.markdown(" Nous avons fait fait varier les hyperparamètres selon le dictionnaire suivant:")  
+#    '''
+#    parametres_svc = {
+#            'C':[1,50,100,200],
+#        'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
+#        'gamma':[0.1, 0.5,1]
+#    }
+#    
+#    '''
+#st.markdown("Après un GridSearchCV, les meilleurs paramètres pour le SVC sont  {'C': 100, 'gamma': 1, 'kernel': 'rbf'}")
     # On refait la classification avec les paramètres optimisés
-    clf_svc_optim = SVC(C = 100, gamma = 1, kernel = 'rbf')
-    clf_svc_optim.fit(X_train, y_train)
-    y_pred_svc_optim = clf_svc_optim.predict(X_test)
+#clf_svc_optim = SVC(C = 100, gamma = 1, kernel = 'rbf')
+   # clf_svc_optim.fit(X_train, y_train)
+    # y_pred_svc_optim = clf_svc_optim.predict(X_test)
     
-    st.markdown('*Matrice de confusion du SVC optimisé*')
-    matrix_optim = pd.crosstab(y_test, y_pred_svc_optim, rownames = ['Classes réelles'], colnames = ['Classes prédites SVC'])
-    st.dataframe(matrix_optim)
-    st.write("L'accuracy du classifieur SVC optimisé est de:",accuracy_score(y_test, y_pred_svc_optim).round(2))
+    # st.markdown('*Matrice de confusion du SVC optimisé*')
+    # matrix_optim = pd.crosstab(y_test, y_pred_svc_optim, rownames = ['Classes réelles'], colnames = ['Classes prédites SVC'])
+    # st.dataframe(matrix_optim)
+    # st.write("L'accuracy du classifieur SVC optimisé est de:",accuracy_score(y_test, y_pred_svc_optim).round(2))
     
-    st.write("###### Classifieur KNN")
-    st.markdown(" Nous avons fait fait varier les hyperparamètres suivants:")  
-    '''
-    parametres_knn = {
-        'leaf_size':list(range(1,5)),
-        'n_neighbors': list(range(1,10)),
-        'p':[1,2],
-        'metric': ['minkowski','manhattan','chebyshev']
-    }
+    # st.write("###### Classifieur KNN")
+    # st.markdown(" Nous avons fait fait varier les hyperparamètres suivants:")  
+    # '''
+    # parametres_knn = {
+    #     'leaf_size':list(range(1,5)),
+    #     'n_neighbors': list(range(1,10)),
+    #     'p':[1,2],
+    #     'metric': ['minkowski','manhattan','chebyshev']
+    # }
     
-    '''
-    st.markdown("Après un GridSearchCV, les meilleurs paramètres pour le KNN sont  {'leaf_size': 4, 'metric': 'minkowski', 'n_neighbors': 1, 'p': 1}")
-    # On refait la classification avec les paramètres optimisés
-    clf_knn_optim = KNeighborsClassifier(n_neighbors = 1, leaf_size = 4, metric = 'minkowski', p = 1)
-    clf_knn_optim.fit(X_train, y_train)
-    y_pred_knn_optim = clf_knn_optim.predict(X_test)
+    # '''
+    # st.markdown("Après un GridSearchCV, les meilleurs paramètres pour le KNN sont  {'leaf_size': 4, 'metric': 'minkowski', 'n_neighbors': 1, 'p': 1}")
+    # # On refait la classification avec les paramètres optimisés
+    # clf_knn_optim = KNeighborsClassifier(n_neighbors = 1, leaf_size = 4, metric = 'minkowski', p = 1)
+    # clf_knn_optim.fit(X_train, y_train)
+    # y_pred_knn_optim = clf_knn_optim.predict(X_test)
     
-    st.markdown('*Matrice de confusion du KNN optimisé*')
-    matrix_optim = pd.crosstab(y_test, y_pred_knn_optim, rownames = ['Classes réelles'], colnames = ['Classes prédites KNN'])
-    st.dataframe(matrix_optim)
-    st.write("L'accuracy du classifieur KNN optimisé est de:",accuracy_score(y_test, y_pred_knn_optim).round(2))
+    # st.markdown('*Matrice de confusion du KNN optimisé*')
+    # matrix_optim = pd.crosstab(y_test, y_pred_knn_optim, rownames = ['Classes réelles'], colnames = ['Classes prédites KNN'])
+    # st.dataframe(matrix_optim)
+    # st.write("L'accuracy du classifieur KNN optimisé est de:",accuracy_score(y_test, y_pred_knn_optim).round(2))
     
-    st.write("###### Classifieur Random Forest")
-    st.markdown(" Nous avons fait fait varier les hyperparamètres suivants:")  
-    '''
-    parametres_rf= {
-        'n_estimators':[200,300,400,500,600,700],
-        'criterion': ['gini', 'entropy'],
-        'max_features': ['auto', 'sqrt', 'log2']              
-    }
+    # st.write("###### Classifieur Random Forest")
+    # st.markdown(" Nous avons fait fait varier les hyperparamètres suivants:")  
+    # '''
+    # parametres_rf= {
+    #     'n_estimators':[200,300,400,500,600,700],
+    #     'criterion': ['gini', 'entropy'],
+    #     'max_features': ['auto', 'sqrt', 'log2']              
+    # }
     
-    '''
-    st.markdown("Après un GridSearchCV, les meilleurs paramètres pour le Random Forest sont {'criterion': 'entropy', 'max_features': 'log2', 'n_estimators': 600}")
-    # On refait la classification avec les paramètres optimisés
-    clf_rf_optim = RandomForestClassifier(n_estimators = 600, criterion = 'entropy', max_features = 'log2')
-    clf_rf_optim.fit(X_train, y_train)
-    y_pred_rf_optim = clf_rf_optim.predict(X_test)
+    # '''
+    # st.markdown("Après un GridSearchCV, les meilleurs paramètres pour le Random Forest sont {'criterion': 'entropy', 'max_features': 'log2', 'n_estimators': 600}")
+    # # On refait la classification avec les paramètres optimisés
+    # clf_rf_optim = RandomForestClassifier(n_estimators = 600, criterion = 'entropy', max_features = 'log2')
+    # clf_rf_optim.fit(X_train, y_train)
+    # y_pred_rf_optim = clf_rf_optim.predict(X_test)
     
-    st.markdown('*Matrice de confusion du Random Forest optimisé*')
-    matrix_optim = pd.crosstab(y_test, y_pred_rf_optim, rownames = ['Classes réelles'], colnames = ['Classes prédites Random Forest'])
-    st.dataframe(matrix_optim)
-    st.write("L'accuracy du classifieur Random Forest optimisé est de:",accuracy_score(y_test, y_pred_rf_optim).round(2))
+    # st.markdown('*Matrice de confusion du Random Forest optimisé*')
+    # matrix_optim = pd.crosstab(y_test, y_pred_rf_optim, rownames = ['Classes réelles'], colnames = ['Classes prédites Random Forest'])
+    # st.dataframe(matrix_optim)
+    # st.write("L'accuracy du classifieur Random Forest optimisé est de:",accuracy_score(y_test, y_pred_rf_optim).round(2))
     
     
     
