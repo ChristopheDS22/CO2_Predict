@@ -55,7 +55,8 @@ pages = ['Accueil','Introduction','Exploration et analyse des données',
          'Modélisation : Regression multiple', 'Modélisation : Classification multi-classes', 'Interprétabilité SHAP', 
          "Prévoyez les rejets de CO2 et la classe d'émission de votre véhicule!", 'Conclusion']
 
-page = st.sidebar.radio('**Sélectionnez une page:**', pages)
+st.sidebar.markdown('**Sélectionnez une page:**')
+page = st.sidebar.radio('', pages)
 
 ## Affichage des auteurs et mentor en bas de la sidebar:
 st.sidebar.write(' ')
@@ -175,17 +176,19 @@ from sklearn.model_selection import train_test_split
 
 data = pd.read_csv('data.csv', index_col = 0)
 target_reg = pd.read_csv('target_reg.csv', index_col = 0)
+target_reg = target_reg.squeeze()
 
 data_go = pd.read_csv('data_go.csv', index_col = 0)
 target_go = pd.read_csv('target_go.csv', index_col = 0)
+target_go = target_go.squeeze()
 
 data_es = pd.read_csv('data_es.csv', index_col = 0)
 target_es = pd.read_csv('target_es.csv', index_col = 0)
+target_es = target_es.squeeze()
 
 
 # CHARGEMENT DES MODELES: ------------------------------------------------------------------------
-#lr_loaded = load('lr.joblib')
-#lr_sfm_loaded = load('lr_sfm.joblib')
+
 
 # FONCTIONS: ----------------------------------------------------------------------------
 
@@ -201,33 +204,41 @@ def standardisation_lr(data, target_reg):
       
     return [X_train, X_test, y_train, y_test]
 
-def regression_lineaire(X_train, y_train, X_test, y_test):
+def regression_lineaire(model_joblib, X_train, y_train, X_test, y_test):
     # Instanciation d'un modèle de régression linéaire
-    lr = LinearRegression()
+    lr = load(model_joblib)
     
     # Entraînement et prédictions:
-    lr.fit(X_train, y_train)
+
     pred_train = lr.predict(X_train) # = valeurs ajustées X_train
     pred_test = lr.predict(X_test) # = valeurs ajustées X_test
     
     return [lr, pred_train, pred_test]
 
-def indicateurs_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test):
+def metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test):
     # Affichage des metrics:
     st.write("R² modèle_train =", round(lr.score(X_train, y_train),2))
     st.write("R² obtenu par CV =", round(cross_val_score(lr,X_train,y_train, cv = 5).mean(),2))
     st.write("R² modèle_test =", round(lr.score(X_test, y_test),2))
-    st.write('\nRMSE_train =', round(np.sqrt(mean_squared_error(y_train, pred_train)),2))
+    st.write("")
+    st.write('RMSE_train =', round(np.sqrt(mean_squared_error(y_train, pred_train)),2))
     st.write('RMSE_test =', round(np.sqrt(mean_squared_error(y_test, pred_test)),2))
-    st.write("\nMAE_train:", round(mean_absolute_error(y_train, pred_train),2))
+    st.write("")
+    st.write("MAE_train:", round(mean_absolute_error(y_train, pred_train),2))
     st.write("MAE_test:", round(mean_absolute_error(y_test, pred_test),2))
-       
+    
+def coef_lr(lr, X_train):
     # Représentation des coefficients:
-    #coef = lr.coef_
-    #st.bar_chart(X_train.columns, coef)
-    #st.xticks(X_train.columns, rotation = 90)
-    #st.title('\nReprésentation des coefficients de chaque variable du modèle');
-          
+    plt.rcParams['axes.facecolor'] = 'whitesmoke'
+    
+    coef = lr.coef_
+    fig = plt.figure()
+    plt.bar(X_train.columns, coef)
+    plt.xticks(X_train.columns, rotation = 90)
+    #plt.title('\nReprésentation des coefficients de chaque variable du modèle')
+    st.pyplot(fig)
+
+def graph_res(y_train, y_test, pred_train, pred_test):
     #Normalité des résidus:
     ## Calcul des résidus et résidus normalisés:
     residus = pred_train - y_train 
@@ -244,13 +255,15 @@ def indicateurs_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test):
                         wspace=0.2,
                         hspace=0.4)
     
+    plt.rcParams['axes.facecolor'] = 'whitesmoke'
+    
     ## Graphe normalisation résidus:
     plt.subplot(2,2,1)
     #stats.probplot(residus_norm, plot = plt)
     
     ## Graphe résidus en fonction de pred_train (valeurs ajustées):
     plt.subplot(2,2,2)
-    plt.scatter(pred_train, residus)
+    plt.scatter(pred_train, residus, alpha = 0.4)
     plt.plot((pred_train.min(), pred_train.max()), (0, 0), lw=3, color='red')
     plt.plot((pred_train.min(), pred_train.max()), (2*residus.std(), 2*residus.std()), 'r-', lw=1.5, label = '± 2 σ') 
     plt.plot((pred_train.min(), pred_train.max()), (3*residus.std(), 3*residus.std()), 'r--', lw=1.5, label = '± 3 σ')
@@ -259,20 +272,23 @@ def indicateurs_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test):
     plt.title('Résidus en fonction de pred_train (valeurs ajustées)')
     plt.xlabel('pred_train (valeurs ajustées)')
     plt.ylabel('Résidus')
+    plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
     plt.legend(loc = 'lower left')
     
     ## Graphe boxplot des résidus:
     plt.subplot(2,2,3)
     sns.boxplot(residus)
+    plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
     plt.title('Boite à moustache des résidus')
     plt.xlabel('résidus')
     
     ## Graphe prédictions en fonction de y_test (= le long de la droite si elles sont bonnes):
     plt.subplot(2,2,4)
-    plt.scatter(pred_test, y_test)
+    plt.scatter(pred_test, y_test, alpha = 0.4)
     plt.title('Nuage de points entre pred_test et y_test')
     plt.xlabel('pred_test')
     plt.ylabel('y_test')
+    plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
     plt.plot((y_test.min(), y_test.max()), (y_test.min(), y_test.max()), lw = 3, color ='red')
     st.pyplot(fig)
     
@@ -289,38 +305,90 @@ if page == pages[3]:
     
     with tab1:
         st.caption("Graphique")
+        # Représentation graphique en 4D de l'influence de ces 3 variables significatives sur la variable explicative target (= rejet CO2):
+        #from mpl_toolkits.mplot3d import Axes3D
+        #%matplotlib notebook
+        
+        #fig = plt.figure(figsize = (9,9))
+        #ax = fig.add_subplot(111, projection='3d')
+        
+        #z = y_train
+        #x = sfm_train['puiss_max']
+        #y = sfm_train['masse_ordma_min']
+        
+        #ax.scatter(x, y, z,  c=sfm_train['Carburant'], cmap = ('viridis'))
+        #ax.set_xlabel('Puissance véhicules (valeurs standardisées)')
+        #ax.set_ylabel('Masse véhicules (valeurs standardisées)')
+        #ax.set_zlabel('CO2 (g/km)')
+        
+        #plt.legend(['ES','GO'])
+        #plt.title('Représentation des rejets de CO2 des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+        #st.pyplot(fig)
+        
         st.caption("Interprétation")
 
         
     with tab2:
-        st.markdown("**:blue[1. Régression multiple avec toutes les variables]**")
-        
-        #Standardisation et split du dataset:
-        X_train, X_test, y_train, y_test = standardisation_lr(data, target_reg)
-        
-        lr, pred_train, pred_test = regression_lineaire(X_train, y_train, X_test, y_test)
-        
-        residus, residus_norm, residus_std = indicateurs_lr(lr,
-                                                    X_train, y_train, X_test, y_test,
-                                                    pred_train, pred_test)
+        choix = st.selectbox('Quel dataset voulez-vous analyser?',
+                             ('Tous les véhicules', 'Véhicules diesel', 'Véhicules essence'))
+        if choix == 'Tous les véhicules':
+            dataset = data
+            cible = target_reg
+            model = 'lr.joblib'
+            model_sfm = 'lr_sfm.joblib'
+        if choix == 'Véhicules diesel':
+            dataset = data_go
+            cible = target_go
+            model = 'lr_go.joblib'
+            model_sfm = 'sfm_go.joblib'
+        if choix == 'Véhicules essence':
+            dataset = data_es
+            cible = target_es
+            model = 'lr_es.joblib'
+            model_sfm = 'sfm_es.joblib'
+        st.markdown("**Premier modèle**")
+        c1, c2, c3 = st.columns((0.5, 1.1, 2.4))
+
+        with c1:
+            st.write("##### **Metrics:**")
+            st.write('')
+            
+            #Standardisation, split du dataset, régression:
+            X_train, X_test, y_train, y_test = standardisation_lr(dataset, cible)
+            lr, pred_train, pred_test = regression_lineaire(model, X_train, y_train, X_test, y_test)
+            metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test)
+            
+        with c2:
+            st.write("##### **Coefficients des variables:**")
+            coef_lr(lr, X_train)
+            
+        with c3:
+            st.write("##### **Analyse graphique des résidus:**")
+            residus, residus_norm, residus_std = graph_res(y_train, y_test,
+                                                           pred_train,
+                                                           pred_test)
         
        
-        st.markdown(":blue[Résidus]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(":blue[Metrics]")
-        col1, col2= st.columns(2)
-        col1.metric("R²", "79 %", "1.2 %")
-        col2.metric("RMSE", "21", "-4")
-        st.metric(label="R²", value="79 %", delta="-1.2 %")
-        st.markdown("blablabla et blablabla")
-        st.markdown(' ')
-        
-        st.markdown("**:blue[2. Modèle affiné]**")
-        st.markdown(":blue[Résidus]")
-        st.markdown("reblablabla et reblablabla")
-        st.markdown(":blue[Metrics]")
-        st.markdown("reblablabla et reblablabla")
-        st.markdown(' ')
+        st.markdown("**Modèle affiné**")
+        c1, c2, c3 = st.columns((0.5, 1.1, 2.4))
+
+        with c1:
+            st.write("##### **Metrics:**")
+            st.write('')
+            
+            #Standardisation, split du dataset, régression:
+            lr, pred_train, pred_test = regression_lineaire(model_sfm, X_train, y_train, X_test, y_test)
+            metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test)
+            
+        with c2:
+            st.write("##### **Coefficients des variables retenues par le modèle:**")
+            coef_lr(lr, X_train)
+            
+        with c3:
+            st.write("##### **Analyse graphique des résidus:**")
+            residus, residus_norm, residus_std = graph_res(y_train, y_test,
+                                                           pred_train,
+                                                           pred_test)
         
         
     with tab3:
