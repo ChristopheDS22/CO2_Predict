@@ -409,148 +409,153 @@ if page == pages[3]:
     tab1, tab2, tab3, tab4 = st.tabs(['Analyse de la variable cible CO₂', 'Régréssions multiples', 'Comparaison des modèles', 'A vous de jouer!'])
     
     with tab1:
-        st.caption("Graphique")
         c1, c2 = st.columns((1,1))
         with c1:
+            st.markdown("##### Choississez le type d'analyse de la variable cible CO₂ 👇")
+            Analyse_Y = st.radio(" ",
+                                 ["Analyse globale", "Analyse par type de carburant"],
+                               key="visibility",
+                               horizontal = True)
+            st.write('')
             from scipy.stats import norm
-            fig = plt.figure(figsize =(10,15))
-            
-            # Espacement des graphes:
-            plt.subplots_adjust(left=0.1,
-                                bottom=0.1,
-                                right=0.9,
-                                top=0.9,
-                                wspace=0.2,
-                                hspace=0.6) 
-            plt.subplot(511)
-            
             # Analyse de la distribution target (CO2 (g/km)):
             dist = pd.DataFrame(target_reg)
             
-            # Histogramme de distribution:
-            plt.hist(dist, bins=60, density=True, alpha=0.6, color='b')
-            plt.title('Histogramme de CO2 (g/km)')
-            plt.xlim(0,400)
-            plt.xlabel('CO2 (g/km)')
-            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
-            
-            # Représentation de la loi normale avec la moyenne et l'écart-type de la distribution -
-            # Affichage de la moyenne et la médiane de la distribution:
-            
-            x_axis = np.arange(0,400,1)
-            plt.plot(x_axis, norm.pdf(x_axis, dist.mean(), dist.std()),'r', linewidth = 3)
-            plt.xlim(0,400)
-            plt.plot((dist.mean(), dist.mean()), (0, 0.015), 'r-', lw=1.5, label = 'moyenne de la distribution')
-            plt.plot((dist.median(), dist.median()), (0, 0.015), 'r--', lw=1.5, label = 'médiane de la distribution')
-            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
-            plt.legend()
-            
-            # Boite à moustache de la distribution:
-            plt.subplot(512)
-            sns.boxplot(x=dist.CO2, notch=True)
-            plt.title('Boite à moustache de CO2 (g/km)')
-            plt.xlabel('CO2 (g/km)')
-            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
-            plt.xlim(0,400)
-            
-            # Histogrammes de distribution des véhicules essence et des véhicules diesel :
-            plt.subplot(513)
-            ES = df.CO2[df['Carburant']=='ES']
-            GO = df.CO2[df['Carburant']=='GO']
-            
-            plt.hist(ES,
-                     bins=80,
-                     density=True,
-                     alpha=0.4,
-                     color='green',
-                     label ='Distribution des véhicules essence')
-            
-            plt.hist(GO,
-                     bins=40,
-                     density=True,
-                     alpha=0.4,
-                     color='orange',
-                     label ='Distribution des véhicules diesel')
-            
-            plt.title('Histogramme de CO2 (g/km) en fonction du carburant')
-            plt.xlabel('CO2 (g/km)')
-            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
-            plt.legend()
-            
-            # Réprésentation des distributions des véhicules essence et diesel en prenant en compte uniquement
-            # leurs moyennes et leurs écarts-types (= aspect d'une loi normale avec ces moyennes et ces écarts-types):
-            ## Représentation de la loi normale avec la moyenne et l'écart-type de la distribution des véhicules essence ES:
-            
-            plt.subplot(514)
-            x_axis = np.arange(0,400,1)
-            plt.plot(x_axis,
-                     norm.pdf(x_axis, ES.mean(), ES.std()),
-                     'g',
-                     linewidth = 3,
-                     alpha = 0.8,
-                     label ='loi normale [ES)]')
-            plt.xlim(0,400)
-            plt.plot((ES.mean(), ES.mean()), (0, 0.015), 'g', lw=1.5, label = 'moyenne de la distribution ES')
-            plt.plot((ES.median(), ES.median()), (0, 0.015), 'g--', lw=1.5, label = 'médiane de la distribution ES')
-            
-            ## Représentation de la loi normale avec la moyenne et l'écart-type de la distribution des véhicules diesel GO:
-            plt.plot(x_axis,
-                     norm.pdf(x_axis, GO.mean(), GO.std()),
-                     'orange',
-                     linewidth = 3,
-                     alpha = 0.8,
-                     label ='loi normale [GO]')
-            plt.xlim(0,400)
-            plt.plot((GO.mean(), GO.mean()), (0, 0.015), 'y', lw=1.5, label = 'moyenne de la distribution GO')
-            plt.plot((GO.median(), GO.median()), (0, 0.015), 'y--', lw=1.5, label = 'médiane de la distribution GO')
-            
-            plt.title('Représentation des lois normales des distributions des véhicules essence et diesel suivant leurs moyennes et écarts-types')
-            plt.xlabel('CO2 (g/km)')
-            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
-            plt.legend()
-            
-            # Boite à moustache de la distribution en fonction du carburant:
-            plt.subplot(515)
-            sns.boxplot(data = df, y = 'Carburant' , x = 'CO2', palette = ['green','gold'], notch=True)
-            plt.xticks(rotation = 'vertical')
-            plt.title('Boite à moustache de CO2 (g/km) en fonction du type de carburant')
-            plt.xlabel('CO2 (g/km)')
-            plt.xlim(0,400)
-            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
-            st.pyplot(fig)
-        
-        # Représentation graphique en 4D de l'influence de ces 3 variables significatives sur la variable explicative target (= rejet CO2):
-        #from mpl_toolkits.mplot3d import Axes3D
-        #%matplotlib notebook
-        
-        #fig = plt.figure(figsize = (9,9))
-        #ax = fig.add_subplot(111, projection='3d')
-        
-        #z = y_train
-        #x = sfm_train['puiss_max']
-        #y = sfm_train['masse_ordma_min']
-        
-        #ax.scatter(x, y, z,  c=sfm_train['Carburant'], cmap = ('viridis'))
-        #ax.set_xlabel('Puissance véhicules (valeurs standardisées)')
-        #ax.set_ylabel('Masse véhicules (valeurs standardisées)')
-        #ax.set_zlabel('CO2 (g/km)')
-        
-        #plt.legend(['ES','GO'])
-        #plt.title('Représentation des rejets de CO2 des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-        #st.pyplot(fig)
-        
-        st.caption("Interprétation")
-
+            if Analyse_Y == "Analyse globale":
+                fig = plt.figure(figsize =(10,5))
+                
+                # Espacement des graphes:
+                plt.subplots_adjust(left=0.1,
+                                    bottom=0.1,
+                                    right=0.9,
+                                    top=0.9,
+                                    wspace=0.2,
+                                    hspace=1) 
+                plt.subplot(211)
+                
+                # Histogramme de distribution:
+                plt.hist(dist, bins=60, density=True, rwidth = 0.8, color='steelblue')
+                plt.title('Histogramme de CO2 (g/km)')
+                plt.xlim(0,400)
+                plt.xlabel('CO2 (g/km)')
+                plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+                
+                # Représentation de la loi normale avec la moyenne et l'écart-type de la distribution -
+                # Affichage de la moyenne et la médiane de la distribution:
+                
+                x_axis = np.arange(0,400,1)
+                plt.plot(x_axis, norm.pdf(x_axis, dist.mean(), dist.std()),'r', linewidth = 3)
+                plt.xlim(0,400)
+                plt.plot((dist.mean(), dist.mean()), (0, 0.015), 'r-', lw=1.5, label = 'moyenne de la distribution')
+                plt.plot((dist.median(), dist.median()), (0, 0.015), 'r--', lw=1.5, label = 'médiane de la distribution')
+                plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+                plt.legend()
+                
+                # Boite à moustache de la distribution:
+                plt.subplot(212)
+                sns.boxplot(x=dist.CO2, notch=True)
+                plt.title('Boite à moustache de CO2 (g/km)')
+                plt.xlabel('CO2 (g/km)')
+                plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+                plt.xlim(0,400)
+                
+                st.pyplot(fig)
+                
+            if Analyse_Y == "Analyse par type de carburant":
+                fig = plt.figure(figsize =(10,12))
+                
+                # Espacement des graphes:
+                plt.subplots_adjust(left=0.1,
+                                    bottom=0.1,
+                                    right=0.9,
+                                    top=0.9,
+                                    wspace=0.2,
+                                    hspace=0.6)
+                # Histogrammes de distribution des véhicules essence et des véhicules diesel :
+                plt.subplot(311)
+                ES = df.CO2[df['Carburant']=='ES']
+                GO = df.CO2[df['Carburant']=='GO']
+                
+                plt.hist(ES,
+                         bins=80,
+                         density=True,
+                         alpha=0.4,
+                         color='green',
+                         label ='Distribution des véhicules essence')
+                
+                plt.hist(GO,
+                         bins=40,
+                         density=True,
+                         alpha=0.4,
+                         color='orange',
+                         label ='Distribution des véhicules diesel')
+                
+                plt.title('Histogramme de CO2 (g/km) en fonction du carburant')
+                plt.xlabel('CO2 (g/km)')
+                plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+                plt.legend()
+                
+                # Réprésentation des distributions des véhicules essence et diesel en prenant en compte uniquement
+                # leurs moyennes et leurs écarts-types (= aspect d'une loi normale avec ces moyennes et ces écarts-types):
+                ## Représentation de la loi normale avec la moyenne et l'écart-type de la distribution des véhicules essence ES:
+                
+                plt.subplot(312)
+                x_axis = np.arange(0,400,1)
+                plt.plot(x_axis,
+                         norm.pdf(x_axis, ES.mean(), ES.std()),
+                         'g',
+                         linewidth = 3,
+                         alpha = 0.8,
+                         label ='loi normale [ES)]')
+                plt.xlim(0,400)
+                plt.plot((ES.mean(), ES.mean()), (0, 0.015), 'g', lw=1.5, label = 'moyenne de la distribution ES')
+                plt.plot((ES.median(), ES.median()), (0, 0.015), 'g--', lw=1.5, label = 'médiane de la distribution ES')
+                
+                ## Représentation de la loi normale avec la moyenne et l'écart-type de la distribution des véhicules diesel GO:
+                plt.plot(x_axis,
+                         norm.pdf(x_axis, GO.mean(), GO.std()),
+                         'orange',
+                         linewidth = 3,
+                         alpha = 0.8,
+                         label ='loi normale [GO]')
+                plt.xlim(0,400)
+                plt.plot((GO.mean(), GO.mean()), (0, 0.015), 'y', lw=1.5, label = 'moyenne de la distribution GO')
+                plt.plot((GO.median(), GO.median()), (0, 0.015), 'y--', lw=1.5, label = 'médiane de la distribution GO')
+                plt.title('Représentation des lois normales des distributions des véhicules essence et diesel suivant leurs moyennes et écarts-types')
+                plt.xlabel('CO2 (g/km)')
+                plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+                plt.legend()
+                
+                # Boite à moustache de la distribution en fonction du carburant:
+                plt.subplot(313)
+                sns.boxplot(data = df, y = 'Carburant' , x = 'CO2', palette = ['green','gold'], notch=True)
+                plt.xticks(rotation = 'vertical')
+                plt.title('Boite à moustache de CO2 (g/km) en fonction du type de carburant')
+                plt.xlabel('CO2 (g/km)')
+                plt.xlim(0,400)
+                plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+                
+                st.pyplot(fig)
+               
+ 
         
     with tab2:
-        choix_dataset = st.selectbox('Quel dataset voulez-vous analyser?',
-                                     ('Dataset complet (véhicules essence et diesel)',
-                                      'Véhicules diesel uniquement',
-                                      'Véhicules essence uniquement'))
+        st.markdown("##### Quel dataset voulez-vous analyser? 👇")
+        choix_dataset = st.radio(" ",
+                             ["Dataset complet (véhicules essence et diesel)",
+                              "Véhicules diesel uniquement",
+                              "Véhicules essence uniquement"],
+                           key="visibility",
+                           horizontal = True)
         
-        choix_model = st.selectbox('Quel dataset voulez-vous analyser?',
-                                   ("Modèle général",
-                                    "Modéle affiné"))
+        st.write('')
+        st.markdown("##### Quel modèle voulez-vous analyser? 👇")
+        choix_model = st.radio(" ",
+                             ["Modèle général",
+                              "Modéle affiné"],
+                           key="visibility",
+                           horizontal = True)
+        st.write('')
                               
         if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
             dataset = data
@@ -568,7 +573,7 @@ if page == pages[3]:
             model = 'lr_es.joblib'
         
 
-        c1, c2, c3 = st.columns((0.7, 1.1, 2.2))
+        c1, c2, c3 = st.columns((0.7, 1, 2.3))
         
         if choix_model == "Modèle général":
             with c1:
@@ -608,6 +613,37 @@ if page == pages[3]:
                 residus, residus_norm, residus_std = graph_res_sfm(y_train, y_test,
                                                                    pred_train,
                                                                    pred_test)
+        
+        st.write('')
+        st.write('')
+        st.write('')
+        
+        c1, c2, c3 = st.columns((1.2, 1.4, 1.4))
+        
+        if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
+            with c1:
+                st.markdown("##### Naviguer dans le graphe 4D en choisissant la vue 👇")
+                import streamlit as st
+                from PIL import Image
+                
+                graph4D = st.radio("",
+                                   ["Vidéo", "Vue 1", "Vue 2", "Vue 3", "Vue 4"],
+                                   key="visibility",
+                                   horizontal = True)
+                if graph4D == 'Vidéo':
+                    st.video('Graphe_4D.mp4', format="video/mp4", start_time=0)
+                if graph4D == 'Vue 1':
+                    image = Image.open('4D1.png')
+                    st.image(image, caption='Représentation des rejets de CO2 des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+                if graph4D == 'Vue 2':
+                    image = Image.open('4D2.png')
+                    st.image(image, caption='Représentation des rejets de CO2 des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+                if graph4D == 'Vue 3':
+                    image = Image.open('4D3.png')
+                    st.image(image, caption='Représentation des rejets de CO2 des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+                if graph4D == 'Vue 4':
+                    image = Image.open('4D4.png')
+                    st.image(image, caption='Représentation des rejets de CO2 des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
 
         
     with tab3:
