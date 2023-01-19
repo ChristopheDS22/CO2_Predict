@@ -63,7 +63,6 @@ st.sidebar.write(' ')
 st.sidebar.write(' ')
 st.sidebar.write(' ')
 st.sidebar.write(' ')
-st.sidebar.write(' ')
 st.sidebar.write('### Auteurs:')
 st.sidebar.write('Camille Millon')
 st.sidebar.write('Gilles Ngamenye')
@@ -186,6 +185,9 @@ data_es = pd.read_csv('data_es.csv', index_col = 0)
 target_es = pd.read_csv('target_es.csv', index_col = 0)
 target_es = target_es.squeeze()
 
+df = pd.read_csv('df.csv', index_col = 0)
+df.CO2 = target_reg
+
 
 # CHARGEMENT DES MODELES: ------------------------------------------------------------------------
 
@@ -205,7 +207,7 @@ def standardisation_lr(data, target_reg):
     return [X_train, X_test, y_train, y_test]
 
 def regression_lineaire(model_joblib, X_train, y_train, X_test, y_test):
-    # Instanciation d'un modèle de régression linéaire
+    # Chargement du modèle de régression linéaire:
     lr = load(model_joblib)
     
     # Entraînement et prédictions:
@@ -214,6 +216,41 @@ def regression_lineaire(model_joblib, X_train, y_train, X_test, y_test):
     pred_test = lr.predict(X_test) # = valeurs ajustées X_test
     
     return [lr, pred_train, pred_test]
+
+def selecteur(X_train, y_train, X_test, y_test):
+    # Instanciation d'un modèle de régression linéaire
+    lr_sfm = LinearRegression()
+    
+    # Création d'un sélecteur à partir de lr:
+    sfm = SelectFromModel(lr_sfm)
+    
+    # Entrainement du selecteur et sauvegarde des colonnes de X_train sélectionnées par sfm dans sfm_train:
+    sfm_train = pd.DataFrame(sfm.fit_transform(X_train, y_train), index = X_train.index)
+    sfm_train = X_train[X_train.columns[sfm.get_support()]]
+    
+    # Sauvegarde des colonnes de X_test dans sfm_test:
+    sfm_test = sfm.transform(X_test)
+    sfm_test = X_test[X_test.columns[sfm.get_support()]]
+        
+    # Régression linéaire avec sfm_train:
+    lr_sfm.fit(sfm_train, y_train)
+    pred_train = lr_sfm.predict(sfm_train) # = valeurs ajustées sfm_train
+    pred_test = lr_sfm.predict(sfm_test) # = valeurs ajustées sfm_test
+    
+    return [lr_sfm, pred_train, pred_test, sfm_train, sfm_test]
+
+def metrics_sfm(lr_sfm, X_train, y_train, X_test, y_test, pred_train, pred_test, sfm_train, sfm_test):
+    # Affichage des metrics:
+    st.write("R2 modèle_train =", round(lr_sfm.score(sfm_train, y_train),2))
+    st.write("R2 obtenu par CV =", round(cross_val_score(lr_sfm,sfm_train,y_train).mean(),2))
+    st.write("R2 modèle_test =", round(lr_sfm.score(sfm_test, y_test),2))
+    st.write("")
+    st.write('RMSE train =', round(np.sqrt(mean_squared_error(y_train, pred_train)),2))
+    st.write('RMSE test =', round(np.sqrt(mean_squared_error(y_test, pred_test)),2))
+    st.write("")
+    st.write("MAE_train:", round(mean_absolute_error(y_train, pred_train),2))
+    st.write("MAE_test:", round(mean_absolute_error(y_test, pred_test),2))
+
 
 def metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test):
     # Affichage des metrics:
@@ -235,8 +272,19 @@ def coef_lr(lr, X_train):
     fig = plt.figure()
     plt.bar(X_train.columns, coef)
     plt.xticks(X_train.columns, rotation = 90)
-    #plt.title('\nReprésentation des coefficients de chaque variable du modèle')
     st.pyplot(fig)
+
+def coef_sfm(lr_sfm, sfm_train):
+    # Représentation des coefficients:
+    
+    plt.rcParams['axes.facecolor'] = 'whitesmoke'
+    if sfm_train.shape[1] >= 1:
+        fig = plt.figure()
+        coef = lr_sfm.coef_
+        fig = plt.figure()
+        plt.bar(sfm_train.columns, coef)
+        plt.xticks(sfm_train.columns, rotation = 90)
+        st.pyplot(fig)
 
 def graph_res(y_train, y_test, pred_train, pred_test):
     #Normalité des résidus:
@@ -259,11 +307,12 @@ def graph_res(y_train, y_test, pred_train, pred_test):
     
     ## Graphe normalisation résidus:
     plt.subplot(2,2,1)
-    #stats.probplot(residus_norm, plot = plt)
+    stats.probplot(residus_norm, plot = plt)
+    plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
     
     ## Graphe résidus en fonction de pred_train (valeurs ajustées):
     plt.subplot(2,2,2)
-    plt.scatter(pred_train, residus, alpha = 0.4)
+    plt.scatter(pred_train, residus, alpha = 0.3)
     plt.plot((pred_train.min(), pred_train.max()), (0, 0), lw=3, color='red')
     plt.plot((pred_train.min(), pred_train.max()), (2*residus.std(), 2*residus.std()), 'r-', lw=1.5, label = '± 2 σ') 
     plt.plot((pred_train.min(), pred_train.max()), (3*residus.std(), 3*residus.std()), 'r--', lw=1.5, label = '± 3 σ')
@@ -284,7 +333,7 @@ def graph_res(y_train, y_test, pred_train, pred_test):
     
     ## Graphe prédictions en fonction de y_test (= le long de la droite si elles sont bonnes):
     plt.subplot(2,2,4)
-    plt.scatter(pred_test, y_test, alpha = 0.4)
+    plt.scatter(pred_test, y_test, alpha = 0.3)
     plt.title('Nuage de points entre pred_test et y_test')
     plt.xlabel('pred_test')
     plt.ylabel('y_test')
@@ -295,16 +344,181 @@ def graph_res(y_train, y_test, pred_train, pred_test):
     
     return [residus, residus_norm, residus_std]
     
+def graph_res_sfm(y_train, y_test, pred_train, pred_test):
+    #Normalité des résidus:
+    ## Calcul des résidus et résidus normalisés:
+    residus = pred_train - y_train 
+    residus_norm = (residus-residus.mean())/residus.std()
+    residus_std = residus/np.sqrt(np.sum(residus**2)/(len(residus)-1))
+    
+    # Graphes :
+    fig = plt.figure(figsize = (15,10))
+    # Espacement des graphes:
+    plt.subplots_adjust(left=0.1,
+                        bottom=0.1,
+                        right=0.9,
+                        top=0.9,wspace=0.2,
+                        hspace=0.4)
+    
+    plt.rcParams['axes.facecolor'] = 'whitesmoke'
+    
+    ## Graphe normalisation résidus:
+    plt.subplot(2,2,1)
+    stats.probplot(residus_norm, plot = plt)
+    plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+    
+    ## Graphe résidus en fonction de pred_train (valeurs ajustées):
+    plt.subplot(2,2,2)
+    plt.scatter(pred_train, residus, alpha = 0.3)
+    plt.plot((pred_train.min(), pred_train.max()), (0, 0), lw=3, color='red')
+    plt.plot((pred_train.min(), pred_train.max()), (2*residus.std(), 2*residus.std()), 'r-', lw=1.5, label = '± 2 σ') 
+    plt.plot((pred_train.min(), pred_train.max()), (3*residus.std(), 3*residus.std()), 'r--', lw=1.5, label = '± 3 σ')
+    plt.plot((pred_train.min(), pred_train.max()), (-2*residus.std(), -2*residus.std()), 'r-',lw=1.5)
+    plt.plot((pred_train.min(), pred_train.max()), (-3*residus.std(), -3*residus.std()), 'r--', lw=1.5)
+    plt.title('Résidus en fonction de pred_train (valeurs ajustées)')
+    plt.xlabel('pred_train (valeurs ajustées)')
+    plt.ylabel('Résidus')
+    plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+    plt.legend(loc = 'lower left')
+    
+    ## Graphe boxplot des résidus:
+    plt.subplot(2,2,3)
+    sns.boxplot(residus)
+    plt.title('Boite à moustache des résidus')
+    plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+    plt.xlabel('résidus')
+    
+    ## Graphe prédictions en fonction de y_test (= le long de la droite si elles sont bonnes):
+    plt.subplot(2,2,4)
+    plt.scatter(pred_test, y_test, alpha = 0.3)
+    plt.title('Nuage de points entre pred_test et y_test')
+    plt.xlabel('pred_test')
+    plt.ylabel('y_test')
+    plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+    plt.plot((y_test.min(), y_test.max()), (y_test.min(), y_test.max()), lw = 3, color ='red')
+    st.pyplot(fig)
+    
+    return [residus, residus_norm, residus_std]
+    
     
 
 # ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
 if page == pages[3]:
     st.write('#### Modélisation: Régréssion multiple')
-    st.markdown("Chaque modèle de régréssion a été construit selon la même structure:  \n - un **premier modèle** est généré à partir de l'ensemble des variables,  \n - un **second modèle affiné** est calculé après sélection des variables les plus influentes.")
-    tab1, tab2, tab3, tab4 = st.tabs(['Analyse de la target', 'Régréssions multiples', 'Comparaison des modèles', 'A vous de jouer!'])
+    st.markdown("Chaque modèle de régréssion a été construit selon la même structure:  \n - un **premier modèle général** est généré à partir de l'ensemble des variables du dataset,  \n - un **second modèle affiné** est calculé après sélection des variables les plus influentes.")
+    tab1, tab2, tab3, tab4 = st.tabs(['Analyse de la variable cible CO₂', 'Régréssions multiples', 'Comparaison des modèles', 'A vous de jouer!'])
     
     with tab1:
         st.caption("Graphique")
+        c1, c2 = st.columns((1,1))
+        with c1:
+            from scipy.stats import norm
+            fig = plt.figure(figsize =(10,15))
+            
+            # Espacement des graphes:
+            plt.subplots_adjust(left=0.1,
+                                bottom=0.1,
+                                right=0.9,
+                                top=0.9,
+                                wspace=0.2,
+                                hspace=0.6) 
+            plt.subplot(511)
+            
+            # Analyse de la distribution target (CO2 (g/km)):
+            dist = pd.DataFrame(target_reg)
+            
+            # Histogramme de distribution:
+            plt.hist(dist, bins=60, density=True, alpha=0.6, color='b')
+            plt.title('Histogramme de CO2 (g/km)')
+            plt.xlim(0,400)
+            plt.xlabel('CO2 (g/km)')
+            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+            
+            # Représentation de la loi normale avec la moyenne et l'écart-type de la distribution -
+            # Affichage de la moyenne et la médiane de la distribution:
+            
+            x_axis = np.arange(0,400,1)
+            plt.plot(x_axis, norm.pdf(x_axis, dist.mean(), dist.std()),'r', linewidth = 3)
+            plt.xlim(0,400)
+            plt.plot((dist.mean(), dist.mean()), (0, 0.015), 'r-', lw=1.5, label = 'moyenne de la distribution')
+            plt.plot((dist.median(), dist.median()), (0, 0.015), 'r--', lw=1.5, label = 'médiane de la distribution')
+            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+            plt.legend()
+            
+            # Boite à moustache de la distribution:
+            plt.subplot(512)
+            sns.boxplot(x=dist.CO2, notch=True)
+            plt.title('Boite à moustache de CO2 (g/km)')
+            plt.xlabel('CO2 (g/km)')
+            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+            plt.xlim(0,400)
+            
+            # Histogrammes de distribution des véhicules essence et des véhicules diesel :
+            plt.subplot(513)
+            ES = df.CO2[df['Carburant']=='ES']
+            GO = df.CO2[df['Carburant']=='GO']
+            
+            plt.hist(ES,
+                     bins=80,
+                     density=True,
+                     alpha=0.4,
+                     color='green',
+                     label ='Distribution des véhicules essence')
+            
+            plt.hist(GO,
+                     bins=40,
+                     density=True,
+                     alpha=0.4,
+                     color='orange',
+                     label ='Distribution des véhicules diesel')
+            
+            plt.title('Histogramme de CO2 (g/km) en fonction du carburant')
+            plt.xlabel('CO2 (g/km)')
+            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+            plt.legend()
+            
+            # Réprésentation des distributions des véhicules essence et diesel en prenant en compte uniquement
+            # leurs moyennes et leurs écarts-types (= aspect d'une loi normale avec ces moyennes et ces écarts-types):
+            ## Représentation de la loi normale avec la moyenne et l'écart-type de la distribution des véhicules essence ES:
+            
+            plt.subplot(514)
+            x_axis = np.arange(0,400,1)
+            plt.plot(x_axis,
+                     norm.pdf(x_axis, ES.mean(), ES.std()),
+                     'g',
+                     linewidth = 3,
+                     alpha = 0.8,
+                     label ='loi normale [ES)]')
+            plt.xlim(0,400)
+            plt.plot((ES.mean(), ES.mean()), (0, 0.015), 'g', lw=1.5, label = 'moyenne de la distribution ES')
+            plt.plot((ES.median(), ES.median()), (0, 0.015), 'g--', lw=1.5, label = 'médiane de la distribution ES')
+            
+            ## Représentation de la loi normale avec la moyenne et l'écart-type de la distribution des véhicules diesel GO:
+            plt.plot(x_axis,
+                     norm.pdf(x_axis, GO.mean(), GO.std()),
+                     'orange',
+                     linewidth = 3,
+                     alpha = 0.8,
+                     label ='loi normale [GO]')
+            plt.xlim(0,400)
+            plt.plot((GO.mean(), GO.mean()), (0, 0.015), 'y', lw=1.5, label = 'moyenne de la distribution GO')
+            plt.plot((GO.median(), GO.median()), (0, 0.015), 'y--', lw=1.5, label = 'médiane de la distribution GO')
+            
+            plt.title('Représentation des lois normales des distributions des véhicules essence et diesel suivant leurs moyennes et écarts-types')
+            plt.xlabel('CO2 (g/km)')
+            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+            plt.legend()
+            
+            # Boite à moustache de la distribution en fonction du carburant:
+            plt.subplot(515)
+            sns.boxplot(data = df, y = 'Carburant' , x = 'CO2', palette = ['green','gold'], notch=True)
+            plt.xticks(rotation = 'vertical')
+            plt.title('Boite à moustache de CO2 (g/km) en fonction du type de carburant')
+            plt.xlabel('CO2 (g/km)')
+            plt.xlim(0,400)
+            plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
+            st.pyplot(fig)
+        
         # Représentation graphique en 4D de l'influence de ces 3 variables significatives sur la variable explicative target (= rejet CO2):
         #from mpl_toolkits.mplot3d import Axes3D
         #%matplotlib notebook
@@ -329,67 +543,72 @@ if page == pages[3]:
 
         
     with tab2:
-        choix = st.selectbox('Quel dataset voulez-vous analyser?',
-                             ('Tous les véhicules', 'Véhicules diesel', 'Véhicules essence'))
-        if choix == 'Tous les véhicules':
+        choix_dataset = st.selectbox('Quel dataset voulez-vous analyser?',
+                                     ('Dataset complet (véhicules essence et diesel)',
+                                      'Véhicules diesel uniquement',
+                                      'Véhicules essence uniquement'))
+        
+        choix_model = st.selectbox('Quel dataset voulez-vous analyser?',
+                                   ("Modèle général",
+                                    "Modéle affiné"))
+                              
+        if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
             dataset = data
             cible = target_reg
             model = 'lr.joblib'
-            model_sfm = 'lr_sfm.joblib'
-        if choix == 'Véhicules diesel':
+           
+        if choix_dataset == 'Véhicules diesel uniquement':
             dataset = data_go
             cible = target_go
             model = 'lr_go.joblib'
-            model_sfm = 'sfm_go.joblib'
-        if choix == 'Véhicules essence':
+            
+        if choix_dataset == 'Véhicules essence uniquement':
             dataset = data_es
             cible = target_es
             model = 'lr_es.joblib'
-            model_sfm = 'sfm_es.joblib'
-        st.markdown("**Premier modèle**")
-        c1, c2, c3 = st.columns((0.5, 1.1, 2.4))
+        
 
-        with c1:
-            st.write("##### **Metrics:**")
-            st.write('')
+        c1, c2, c3 = st.columns((0.7, 1.1, 2.2))
+        
+        if choix_model == "Modèle général":
+            with c1:
+                st.write("##### **Metrics:**")
+                st.write('')
             
             #Standardisation, split du dataset, régression:
-            X_train, X_test, y_train, y_test = standardisation_lr(dataset, cible)
-            lr, pred_train, pred_test = regression_lineaire(model, X_train, y_train, X_test, y_test)
-            metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test)
+                X_train, X_test, y_train, y_test = standardisation_lr(dataset, cible)
+                lr, pred_train, pred_test = regression_lineaire(model, X_train, y_train, X_test, y_test)
+                metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test)
             
-        with c2:
-            st.write("##### **Coefficients des variables:**")
-            coef_lr(lr, X_train)
+            with c2:
+                st.write("##### **Coefficients des variables:**")
+                coef_lr(lr, X_train)
             
-        with c3:
-            st.write("##### **Analyse graphique des résidus:**")
-            residus, residus_norm, residus_std = graph_res(y_train, y_test,
-                                                           pred_train,
-                                                           pred_test)
-        
-       
-        st.markdown("**Modèle affiné**")
-        c1, c2, c3 = st.columns((0.5, 1.1, 2.4))
-
-        with c1:
-            st.write("##### **Metrics:**")
-            st.write('')
+            with c3:
+                st.write("##### **Analyse graphique des résidus:**")
+                residus, residus_norm, residus_std = graph_res(y_train, y_test,
+                                                               pred_train,
+                                                               pred_test)
+        if choix_model == "Modéle affiné":
+            with c1:
+                st.write("##### **Metrics:**")
+                st.write('')
             
             #Standardisation, split du dataset, régression:
-            lr, pred_train, pred_test = regression_lineaire(model_sfm, X_train, y_train, X_test, y_test)
-            metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test)
+                X_train, X_test, y_train, y_test = standardisation_lr(dataset, cible)
+                lr_sfm, pred_train, pred_test, sfm_train, sfm_test = selecteur(X_train, y_train, X_test, y_test)
+                metrics_sfm(lr_sfm, X_train, y_train, X_test, y_test, pred_train, pred_test, sfm_train, sfm_test)
             
-        with c2:
-            st.write("##### **Coefficients des variables retenues par le modèle:**")
-            coef_lr(lr, X_train)
+            with c2:
+                st.write("##### **Coefficients des variables retenues par le modèle:**")
+                coef_sfm(lr_sfm, sfm_train)    
             
-        with c3:
-            st.write("##### **Analyse graphique des résidus:**")
-            residus, residus_norm, residus_std = graph_res(y_train, y_test,
-                                                           pred_train,
-                                                           pred_test)
-        
+            with c3:
+                st.write("##### **Analyse graphique des résidus:**")
+                residus, residus_norm, residus_std = graph_res_sfm(y_train, y_test,
+                                                                   pred_train,
+                                                                   pred_test)
+
         
     with tab3:
         st.markdown("**:blue[1. Premier modèle]**")
