@@ -52,7 +52,7 @@ with st.sidebar:
 ## Affichage du titre et du plan dans la sidebar:
 st.sidebar.title('Projet CO2 Predict')    
 pages = ['Accueil','Introduction','Exploration et analyse des données', 
-         'Modélisation : Regression multiple', 'Modélisation : Classification multi-classes', 'Interprétabilité SHAP', 
+         'Modélisation : Regression multiple', 'Modélisation : Classification', 'Interprétabilité SHAP multi-classes', 
          "Prévoyez les rejets de CO2 et la classe d'émission de votre véhicule!", 'Conclusion']
 
 st.sidebar.markdown('**Sélectionnez une page:**')
@@ -72,7 +72,9 @@ st.sidebar.write('### Mentor:')
 st.sidebar.write('Dan Cohen')
 
 #------------------------------------  Page 0 : accueil ----------------------------------------------------
-
+if page == pages[0]:
+    from PIL import Image
+    st.image(Image.open('CO2 predict1.png'))
 
 
 #------------------------------------  Page 1 : introduction ----------------------------------------------------
@@ -241,9 +243,9 @@ def selecteur(X_train, y_train, X_test, y_test):
 
 def metrics_sfm(lr_sfm, X_train, y_train, X_test, y_test, pred_train, pred_test, sfm_train, sfm_test):
     # Affichage des metrics:
-    st.write("R2 modèle_train =", round(lr_sfm.score(sfm_train, y_train),2))
-    st.write("R2 obtenu par CV =", round(cross_val_score(lr_sfm,sfm_train,y_train).mean(),2))
-    st.write("R2 modèle_test =", round(lr_sfm.score(sfm_test, y_test),2))
+    st.write("R² modèle_train =", round(lr_sfm.score(sfm_train, y_train),2))
+    st.write("R² obtenu par CV =", round(cross_val_score(lr_sfm,sfm_train,y_train).mean(),2))
+    st.write("R² modèle_test =", round(lr_sfm.score(sfm_test, y_test),2))
     st.write("")
     st.write('RMSE train =', round(np.sqrt(mean_squared_error(y_train, pred_train)),2))
     st.write('RMSE test =', round(np.sqrt(mean_squared_error(y_test, pred_test)),2))
@@ -435,9 +437,9 @@ if page == pages[3]:
                 
                 # Histogramme de distribution:
                 plt.hist(dist, bins=60, density=True, rwidth = 0.8, color='steelblue')
-                plt.title('Histogramme de CO2 (g/km)')
+                plt.title('Histogramme de CO₂ (g/km)')
                 plt.xlim(0,400)
-                plt.xlabel('CO2 (g/km)')
+                plt.xlabel('CO₂ (g/km)')
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 
                 # Représentation de la loi normale avec la moyenne et l'écart-type de la distribution -
@@ -455,7 +457,7 @@ if page == pages[3]:
                 plt.subplot(212)
                 sns.boxplot(x=dist.CO2, notch=True)
                 plt.title('Boite à moustache de CO2 (g/km)')
-                plt.xlabel('CO2 (g/km)')
+                plt.xlabel('CO₂ (g/km)')
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 plt.xlim(0,400)
                 
@@ -490,8 +492,8 @@ if page == pages[3]:
                          color='orange',
                          label ='Distribution des véhicules diesel')
                 
-                plt.title('Histogramme de CO2 (g/km) en fonction du carburant')
-                plt.xlabel('CO2 (g/km)')
+                plt.title('Histogramme de CO₂ (g/km) en fonction du carburant')
+                plt.xlabel('CO₂ (g/km)')
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 plt.legend()
                 
@@ -522,7 +524,7 @@ if page == pages[3]:
                 plt.plot((GO.mean(), GO.mean()), (0, 0.015), 'y', lw=1.5, label = 'moyenne de la distribution GO')
                 plt.plot((GO.median(), GO.median()), (0, 0.015), 'y--', lw=1.5, label = 'médiane de la distribution GO')
                 plt.title('Représentation des lois normales des distributions des véhicules essence et diesel suivant leurs moyennes et écarts-types')
-                plt.xlabel('CO2 (g/km)')
+                plt.xlabel('CO₂ (g/km)')
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 plt.legend()
                 
@@ -530,12 +532,38 @@ if page == pages[3]:
                 plt.subplot(313)
                 sns.boxplot(data = df, y = 'Carburant' , x = 'CO2', palette = ['green','gold'], notch=True)
                 plt.xticks(rotation = 'vertical')
-                plt.title('Boite à moustache de CO2 (g/km) en fonction du type de carburant')
+                plt.title('Boite à moustache de CO₂ (g/km) en fonction du type de carburant')
                 plt.xlabel('CO2 (g/km)')
                 plt.xlim(0,400)
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 
                 st.pyplot(fig)
+                
+                st.write('___')
+                
+                st.markdown("##### Graphe 4D représentant les rejets de CO₂ par type de carburant en fonction de la masse et de la puissance des véhicules.  \n##### Naviguez dans le graphe 4D en choisissant la vue 👇")
+                import streamlit as st
+                from PIL import Image
+                
+                graph4D = st.radio("",
+                                   ["Vidéo", "Vue 1", "Vue 2", "Vue 3", "Vue 4"],
+                                   key="visibility",
+                                   horizontal = True)
+                if graph4D == 'Vidéo':
+                    st.video('Graphe_4D.mp4', format="video/mp4", start_time=0)
+                if graph4D == 'Vue 1':
+                    image = Image.open('4D1.png')
+                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+                if graph4D == 'Vue 2':
+                    image = Image.open('4D2.png')
+                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+                if graph4D == 'Vue 3':
+                    image = Image.open('4D3.png')
+                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+                if graph4D == 'Vue 4':
+                    image = Image.open('4D4.png')
+                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+
                
  
         
@@ -548,14 +576,14 @@ if page == pages[3]:
                            key="visibility",
                            horizontal = True)
         
-        st.write('')
+        st.write('___')
         st.markdown("##### Quel modèle voulez-vous analyser? 👇")
         choix_model = st.radio(" ",
                              ["Modèle général",
                               "Modéle affiné"],
                            key="visibility",
                            horizontal = True)
-        st.write('')
+        st.write('___')
                               
         if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
             dataset = data
@@ -614,37 +642,6 @@ if page == pages[3]:
                                                                    pred_train,
                                                                    pred_test)
         
-        st.write('')
-        st.write('')
-        st.write('')
-        
-        c1, c2, c3 = st.columns((1.2, 1.4, 1.4))
-        
-        if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
-            with c1:
-                st.markdown("##### Naviguer dans le graphe 4D en choisissant la vue 👇")
-                import streamlit as st
-                from PIL import Image
-                
-                graph4D = st.radio("",
-                                   ["Vidéo", "Vue 1", "Vue 2", "Vue 3", "Vue 4"],
-                                   key="visibility",
-                                   horizontal = True)
-                if graph4D == 'Vidéo':
-                    st.video('Graphe_4D.mp4', format="video/mp4", start_time=0)
-                if graph4D == 'Vue 1':
-                    image = Image.open('4D1.png')
-                    st.image(image, caption='Représentation des rejets de CO2 des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-                if graph4D == 'Vue 2':
-                    image = Image.open('4D2.png')
-                    st.image(image, caption='Représentation des rejets de CO2 des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-                if graph4D == 'Vue 3':
-                    image = Image.open('4D3.png')
-                    st.image(image, caption='Représentation des rejets de CO2 des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-                if graph4D == 'Vue 4':
-                    image = Image.open('4D4.png')
-                    st.image(image, caption='Représentation des rejets de CO2 des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-
         
     with tab3:
         st.markdown("**:blue[1. Premier modèle]**")
