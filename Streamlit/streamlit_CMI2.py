@@ -14,7 +14,6 @@ import plotly.graph_objects as go
 import streamlit as st
 
 
-
 # Emissions de polluants, CO2 et caractéristiques des véhicules
 # commercialisés en France en 2013
 df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
@@ -243,28 +242,28 @@ def selecteur(X_train, y_train, X_test, y_test):
 
 def metrics_sfm(lr_sfm, X_train, y_train, X_test, y_test, pred_train, pred_test, sfm_train, sfm_test):
     # Affichage des metrics:
-    st.write("R² modèle_train =", round(lr_sfm.score(sfm_train, y_train),2))
+    st.write("R² train =", round(lr_sfm.score(sfm_train, y_train),2))
     st.write("R² obtenu par CV =", round(cross_val_score(lr_sfm,sfm_train,y_train).mean(),2))
-    st.write("R² modèle_test =", round(lr_sfm.score(sfm_test, y_test),2))
+    st.write("R² test =", round(lr_sfm.score(sfm_test, y_test),2))
     st.write("")
     st.write('RMSE train =', round(np.sqrt(mean_squared_error(y_train, pred_train)),2))
     st.write('RMSE test =', round(np.sqrt(mean_squared_error(y_test, pred_test)),2))
     st.write("")
-    st.write("MAE_train:", round(mean_absolute_error(y_train, pred_train),2))
-    st.write("MAE_test:", round(mean_absolute_error(y_test, pred_test),2))
+    st.write("MAE train:", round(mean_absolute_error(y_train, pred_train),2))
+    st.write("MAE test:", round(mean_absolute_error(y_test, pred_test),2))
 
 
 def metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test):
     # Affichage des metrics:
-    st.write("R² modèle_train =", round(lr.score(X_train, y_train),2))
+    st.write("R² train =", round(lr.score(X_train, y_train),2))
     st.write("R² obtenu par CV =", round(cross_val_score(lr,X_train,y_train, cv = 5).mean(),2))
-    st.write("R² modèle_test =", round(lr.score(X_test, y_test),2))
+    st.write("R² test =", round(lr.score(X_test, y_test),2))
     st.write("")
-    st.write('RMSE_train =', round(np.sqrt(mean_squared_error(y_train, pred_train)),2))
-    st.write('RMSE_test =', round(np.sqrt(mean_squared_error(y_test, pred_test)),2))
+    st.write('RMSE train =', round(np.sqrt(mean_squared_error(y_train, pred_train)),2))
+    st.write('RMSE test =', round(np.sqrt(mean_squared_error(y_test, pred_test)),2))
     st.write("")
-    st.write("MAE_train:", round(mean_absolute_error(y_train, pred_train),2))
-    st.write("MAE_test:", round(mean_absolute_error(y_test, pred_test),2))
+    st.write("MAE train:", round(mean_absolute_error(y_train, pred_train),2))
+    st.write("MAE test:", round(mean_absolute_error(y_test, pred_test),2))
     
 def coef_lr(lr, X_train):
     # Représentation des coefficients:
@@ -407,13 +406,13 @@ def graph_res_sfm(y_train, y_test, pred_train, pred_test):
 # ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
 if page == pages[3]:
     st.write('#### Modélisation: Régréssion multiple')
-    st.markdown("Chaque modèle de régréssion a été construit selon la même structure:  \n - un **premier modèle général** est généré à partir de l'ensemble des variables du dataset,  \n - un **second modèle affiné** est calculé après sélection des variables les plus influentes.")
-    tab1, tab2, tab3, tab4 = st.tabs(['Analyse de la variable cible CO₂', 'Régréssions multiples', 'Comparaison des modèles', 'A vous de jouer!'])
+    
+    tab1, tab2, tab3 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples', 'A vous de jouer!'])
     
     with tab1:
         c1, c2 = st.columns((1,1))
         with c1:
-            st.markdown("##### Choississez le type d'analyse de la variable cible CO₂ 👇")
+            st.markdown("###### Choississez le type d'analyse de la variable cible CO₂ 👇")
             Analyse_Y = st.radio(" ",
                                  ["Analyse globale", "Analyse par type de carburant"],
                                key="visibility",
@@ -424,7 +423,7 @@ if page == pages[3]:
             dist = pd.DataFrame(target_reg)
             
             if Analyse_Y == "Analyse globale":
-                fig = plt.figure(figsize =(10,5))
+                fig = plt.figure(figsize =(8,5))
                 
                 # Espacement des graphes:
                 plt.subplots_adjust(left=0.1,
@@ -533,56 +532,37 @@ if page == pages[3]:
                 sns.boxplot(data = df, y = 'Carburant' , x = 'CO2', palette = ['green','gold'], notch=True)
                 plt.xticks(rotation = 'vertical')
                 plt.title('Boite à moustache de CO₂ (g/km) en fonction du type de carburant')
-                plt.xlabel('CO2 (g/km)')
+                plt.xlabel('CO₂ (g/km)')
                 plt.xlim(0,400)
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 
                 st.pyplot(fig)
-                
-                st.write('___')
-                
-                st.markdown("##### Graphe 4D représentant les rejets de CO₂ par type de carburant en fonction de la masse et de la puissance des véhicules.  \n##### Naviguez dans le graphe 4D en choisissant la vue 👇")
-                import streamlit as st
-                from PIL import Image
-                
-                graph4D = st.radio("",
-                                   ["Vidéo", "Vue 1", "Vue 2", "Vue 3", "Vue 4"],
-                                   key="visibility",
-                                   horizontal = True)
-                if graph4D == 'Vidéo':
-                    st.video('Graphe_4D.mp4', format="video/mp4", start_time=0)
-                if graph4D == 'Vue 1':
-                    image = Image.open('4D1.png')
-                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-                if graph4D == 'Vue 2':
-                    image = Image.open('4D2.png')
-                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-                if graph4D == 'Vue 3':
-                    image = Image.open('4D3.png')
-                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-                if graph4D == 'Vue 4':
-                    image = Image.open('4D4.png')
-                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-
-               
  
         
     with tab2:
-        st.markdown("##### Quel dataset voulez-vous analyser? 👇")
-        choix_dataset = st.radio(" ",
-                             ["Dataset complet (véhicules essence et diesel)",
-                              "Véhicules diesel uniquement",
-                              "Véhicules essence uniquement"],
-                           key="visibility",
-                           horizontal = True)
-        
+        st.markdown("**Méthodologie**:  \n1. sélection du dataset,  \n2. construction d'un premier modèle général à partir de l'ensemble des variables du dataset,  \n3. construction d'un second modèle affiné après sélection des variables les plus influentes,  \n3. pour chaque modèle: analyse des metrics et résidus et sélection des données les plus pertinentes, puis retour à l'étape 1")
         st.write('___')
-        st.markdown("##### Quel modèle voulez-vous analyser? 👇")
-        choix_model = st.radio(" ",
-                             ["Modèle général",
-                              "Modéle affiné"],
-                           key="visibility",
-                           horizontal = True)
+        c1, c2, c3= st.columns((0.4, 0.4, 1))
+        with c1:
+            st.markdown("###### Dataset à analyser: 👇")
+            choix_dataset = st.radio("",
+                                     ["Dataset complet (véhicules essence et diesel)",
+                                      "Véhicules diesel uniquement",
+                                      "Véhicules essence uniquement"],
+                                     key="visibility")
+        
+        with c2:
+            st.markdown("###### Modèle de régression à analyser: 👇")
+            choix_model = st.radio("",
+                                   ["Modèle général",
+                                    "Modèle affiné"],
+                                   key="visibility")
+        with c3:
+             st.markdown("###### Analyse: 👇")
+             choix_param = st.radio("",
+                                    ["Metrics & Coefficients des variables",
+                                     "Résidus"],
+                                    key="visibility")
         st.write('___')
                               
         if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
@@ -600,48 +580,85 @@ if page == pages[3]:
             cible = target_es
             model = 'lr_es.joblib'
         
-
-        c1, c2, c3 = st.columns((0.7, 1, 2.3))
-        
         if choix_model == "Modèle général":
-            with c1:
-                st.write("##### **Metrics:**")
-                st.write('')
-            
             #Standardisation, split du dataset, régression:
                 X_train, X_test, y_train, y_test = standardisation_lr(dataset, cible)
                 lr, pred_train, pred_test = regression_lineaire(model, X_train, y_train, X_test, y_test)
-                metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test)
-            
-            with c2:
-                st.write("##### **Coefficients des variables:**")
-                coef_lr(lr, X_train)
-            
-            with c3:
-                st.write("##### **Analyse graphique des résidus:**")
-                residus, residus_norm, residus_std = graph_res(y_train, y_test,
-                                                               pred_train,
-                                                               pred_test)
-        if choix_model == "Modéle affiné":
-            with c1:
-                st.write("##### **Metrics:**")
-                st.write('')
-            
+        
+        if choix_model == "Modèle affiné":
             #Standardisation, split du dataset, régression:
                 X_train, X_test, y_train, y_test = standardisation_lr(dataset, cible)
                 lr_sfm, pred_train, pred_test, sfm_train, sfm_test = selecteur(X_train, y_train, X_test, y_test)
-                metrics_sfm(lr_sfm, X_train, y_train, X_test, y_test, pred_train, pred_test, sfm_train, sfm_test)
+        
+        if choix_param == "Metrics & Coefficients des variables":
+            c1, c2, c3, c4 = st.columns((0.7, 1.2, 0.2, 1.5))
+            if choix_model == "Modèle général":
+                with c1:
+                    st.write("##### **Metrics:**")
+                    st.write('')
+                    metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test)
             
-            with c2:
-                st.write("##### **Coefficients des variables retenues par le modèle:**")
-                coef_sfm(lr_sfm, sfm_train)    
+                with c2:
+                    st.write("##### **Coefficients des variables:**")
+                    coef_lr(lr, X_train)
             
-            with c3:
-                st.write("##### **Analyse graphique des résidus:**")
-                residus, residus_norm, residus_std = graph_res_sfm(y_train, y_test,
+            if choix_model == "Modèle affiné":
+                with c1:
+                    st.write("##### **Metrics:**")
+                    st.write('')
+                    metrics_sfm(lr_sfm, X_train, y_train, X_test, y_test, pred_train, pred_test, sfm_train, sfm_test)
+                    
+                with c2:
+                    st.write("##### **Coefficients des variables retenues par le modèle:**")
+                    coef_sfm(lr_sfm, sfm_train)
+                
+                with c4:
+                    
+                    if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
+                        st.markdown("##### Représentation graphique de la cible CO₂ par type de carburant en fonction de la masse et de la puissance des véhicules:")
+                        import streamlit as st
+                        from PIL import Image
+                            
+                        graph4D = st.radio("",
+                                           ["Vidéo", "Vue 1", "Vue 2", "Vue 3", "Vue 4"],
+                                           key="visibility",
+                                           horizontal = True)
+                        if graph4D == 'Vidéo':
+                            st.video('Graphe_4D.mp4', format="video/mp4", start_time=0)
+                            st.caption('Graphe 4D représentant les rejets de CO₂ par type de carburant en fonction de la masse et de la puissance des véhicules')
+                        if graph4D == 'Vue 1':
+                            image = Image.open('4D1.png')
+                            st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+                            st.caption('Graphe 4D représentant les rejets de CO₂ par type de carburant en fonction de la masse et de la puissance des véhicules')
+                        if graph4D == 'Vue 2':
+                            image = Image.open('4D2.png')
+                            st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+                            st.caption('Graphe 4D représentant les rejets de CO₂ par type de carburant en fonction de la masse et de la puissance des véhicules')
+                        if graph4D == 'Vue 3':
+                            image = Image.open('4D3.png')
+                            st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+                            st.caption('Graphe 4D représentant les rejets de CO₂ par type de carburant en fonction de la masse et de la puissance des véhicules')
+                        if graph4D == 'Vue 4':
+                            image = Image.open('4D4.png')
+                            st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
+                            st.caption('Graphe 4D représentant les rejets de CO₂ par type de carburant en fonction de la masse et de la puissance des véhicules')
+                
+        if choix_param == "Résidus":
+            c1, c2 = st.columns((1, 1))
+            if choix_model == "Modèle général":
+                with c1:
+                    st.write("##### **Analyse graphique des résidus:**")
+                    residus, residus_norm, residus_std = graph_res(y_train, y_test,
                                                                    pred_train,
                                                                    pred_test)
-        
+                    
+            if choix_model == "Modèle affiné":
+                with c1:
+                    st.write("##### **Analyse graphique des résidus:**")
+                    residus, residus_norm, residus_std = graph_res_sfm(y_train, y_test,
+                                                                       pred_train,
+                                                                       pred_test)
+    
         
     with tab3:
         st.markdown("**:blue[1. Premier modèle]**")
@@ -658,15 +675,7 @@ if page == pages[3]:
         st.markdown("reblablabla et reblablabla")
         st.markdown(' ')
         
-        
-    with tab4:
-        st.markdown("**:blue[Vous avez carte blanche! Sélectionnez vous-même les paramètres et tentez d'être meilleur que l'algorithme SFM!]**")
-        st.markdown(":blue[Résidus]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(":blue[Metrics]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(' ')
-        
+
 
 #------------------------------------  Page 4 : classification ---------------------------------------------
 
