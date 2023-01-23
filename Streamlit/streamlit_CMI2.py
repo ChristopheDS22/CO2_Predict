@@ -117,9 +117,9 @@ if page == pages[2]:
         table1 = pd.concat([tab_num,tab_cat],axis=1).fillna('')
     
        #on définit des couleurs identiques poru les variables semblables
-       def couleur1(val):
-        color='white' if val not in ('Modèle UTAC' 'Modèle dossier' 'Désignation commerciale') else 'paleturquoise'
-        return 'background-color:%s' % color
+        def couleur1(val):
+           color='white' if val not in ('Modèle UTAC' 'Modèle dossier' 'Désignation commerciale') else 'paleturquoise'
+           return 'background-color:%s' % color
 
      
     # code pour masquer les index
@@ -730,21 +730,9 @@ def df_res(sfm_train, y_train, pred_train, residus):
 
 # ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
 if page == pages[3]:
-<<<<<<< HEAD
-#<<<<<<< HEAD
-    st.write('#### Modélisation: Régression multiple')
-    st.markdown("Chaque modèle de régression a été construit selon la même structure:  \n - un **premier modèle général** est généré à partir de l'ensemble des variables du dataset,  \n - un **second modèle affiné** est calculé après sélection des variables les plus influentes.")
-    
-#=======
-    st.write('#### Modélisation: Régression multiple')
-    
-    tab1, tab2, tab3 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples', 'A vous de jouer!'])
-#>>>>>>> 597d65f44bfa481b5d4e8f71f04911fbfc12107d
-=======
     st.write('#### Modélisation: Régréssion multiple')
     
     tab1, tab2, tab3 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples', 'A vous de jouer!'])
->>>>>>> 03d4645649dd239b3353d7cc56b6db333fe53dc9
     
     with tab1:
         c1, c2 = st.columns((1,1))
@@ -874,8 +862,6 @@ if page == pages[3]:
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 
                 st.pyplot(fig)
-<<<<<<< HEAD
-#<<<<<< HEAD
                 
                 st.write('___')
                 
@@ -921,11 +907,7 @@ if page == pages[3]:
                               "Modéle affiné"],
                            #key="visibility",
                            horizontal = True)
-#=======
-=======
->>>>>>> 03d4645649dd239b3353d7cc56b6db333fe53dc9
- 
-        
+      
     with tab2:
         st.markdown("**Méthodologie**:  \n1. sélection du dataset,  \n2. construction d'un premier modèle général à partir de l'ensemble des variables du dataset,  \n3. construction d'un second modèle affiné après sélection des variables les plus influentes,  \n3. pour chaque modèle: analyse des metrics et résidus et sélection des données les plus pertinentes, puis retour à l'étape 1")
         st.write('___')
@@ -950,10 +932,7 @@ if page == pages[3]:
                                     ["Metrics & Coefficients des variables",
                                      "Résidus"],
                                     key="visibility")
-<<<<<<< HEAD
-#>>>>>>> 597d65f44bfa481b5d4e8f71f04911fbfc12107d
-=======
->>>>>>> 03d4645649dd239b3353d7cc56b6db333fe53dc9
+
         st.write('___')
                               
         if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
