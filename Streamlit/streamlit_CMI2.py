@@ -174,6 +174,7 @@ if page == pages[2]:
 #_______________________________________________________________________________________________________
 
 #CHARGEMENT DES LIBRAIRIES: ----------------------------------------------------------------------------
+import itertools
 
 ## Les différents types de modèles de Machine Learning
 from sklearn.svm import SVC
@@ -200,6 +201,7 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 ## Les métriques
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
@@ -209,9 +211,12 @@ from scipy.stats import jarque_bera
 ## Les fonctions de sauvegarde et chargement de modèles
 from joblib import dump, load
 
+
 from sklearn.model_selection import train_test_split
 
 import matplotlib as mpl
+
+
 
 
 
@@ -1009,7 +1014,7 @@ if page == pages[3]:
                             st.image(image)
                                             
         if choix_param == "Résidus":
-            c1, c2 = st.columns((1.3, 1))
+                    
             if choix_model == "Modèle général":
                 with c1:
                     st.write("##### **Analyse graphique des résidus:**")
@@ -1054,40 +1059,216 @@ if page == pages[3]:
         
 
 
-#------------------------------------  Page 4 : classification ---------------------------------------------
+#_______________________________________________________________________________________________________
+#
+#                                   Page 4 : classification 
+#_______________________________________________________________________________________________________
+
+# CHARGEMENT DES JEUX DE DONNEES NETTOYES ET DES TARGETS CORRESPONDANTES: ------------------------------
+df = pd.read_csv('Model_C02.csv', index_col = 0)
+    
+# On sépare les variables numériques et catégorielles
+var_num = df.select_dtypes(exclude = 'object') # On récupère les variables numériques
+var_cat = df.select_dtypes(include = 'object') # On récupère les variables catégorielles
+
+# On récupère la variable cible
+target_class = df['Cat_CO2'].squeeze()     # Variable cible pour la classification
+
+var_num = var_num.drop(['CO2'], axis = 1)  # Les variables cibles sont éliminées des variables numériques
+var_cat = var_cat.drop(['Cat_CO2'], axis = 1)
+
+# Les variables catégorielles sont transformées en indicatrices
+var_cat_ind = pd.get_dummies(var_cat)
+
+# On récupère les variables explicatives
+data = var_num.join(var_cat_ind)
+
+# FONCTIONS: ----------------------------------------------------------------------------
+
+
+def classification(model, X_train, y_train, X_test, y_test):
+            
+    # Entraînement et prédictions:
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test) # Prédictions sur les valeurs de test
+    
+    # Evaluation
+    score = accuracy_score(y_test, y_pred)
+        
+    return [y_pred, score]
+
+# Fonction pour afficher les 3 matrices de confusion des 3 modèles optimisés:
+def matrice(matrice, titre):
+    classes = ['A','B','C','D','E','F','G']
+    plt.imshow(matrice, interpolation='nearest',cmap='Blues')
+    plt.title(titre)
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes)
+    plt.yticks(tick_marks, classes)
+    plt.grid(False)
+    
+    for i, j in itertools.product(range(matrice.shape[0]), range(matrice.shape[1])):
+        plt.text(j, i, matrice[i, j],
+                 horizontalalignment="center",
+                 color="white" if (matrice[i, j] > ( matrice.max() / 2) or matrice[i, j] == 0) else "black")
+    plt.ylabel('Catégories réelles')
+    plt.xlabel('Catégories prédites')
+    st.pyplot()
+    
+def report(rapport, titre):
+    classes = ['A','B','C','D','E','F','G']
+    plt.imshow(rapport, interpolation='nearest',cmap='Blues')
+    plt.title(titre)
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes)
+    plt.yticks(tick_marks, classes)
+    plt.grid(False)
+    
+
+    plt.ylabel('Catégories réelles')
+    plt.xlabel('Catégories prédites')
+    st.pyplot()
 
 if page == pages[4]:
     st.write('#### Modélisation: Classification multi-classes')
+        
     st.markdown("Explication de la démarche:  \n - un **premier modèle** est généré à partir de l'ensemble des hyperparamètres,  \n - un **second modèle optimisé** est généré après sélection des meilleurs hyperparamètres.")
-    tab1, tab2, tab3 = st.tabs(['Classifications multiples', 'Comparaison des modèles', 'A vous de jouer!'])
+    st.markdown('Nous procédons à une classification multiple. Nous avons donc choisi les classifieurs adaptés.')
+    st.markdown('Nous en avons sélectionné 3 pour cette étude: SVM, KNN et Random Forest')
+    tab1, tab2, tab3, tab4 = st.tabs(['Données', 'Classifications multiples', 'Comparaison des modèles', 'A vous de jouer!'])
+    
+    
+    # Séparation en données d'entraînement et de test
+    X_train, X_test, y_train, y_test = train_test_split(data, target_class,
+                                                    test_size = 0.25,
+                                                    random_state = 2,
+                                                    stratify = target_class)
+
+    # Les variables numériques doivent être standardisées
+    cols = ['puiss_max', 'masse_ordma_min']
+    sc = StandardScaler()
+    X_train[cols] = sc.fit_transform(X_train[cols])
+    X_test[cols] = sc.transform(X_test[cols])
     
     with tab1:
-        st.caption("Graphique")
-        st.caption("Interprétation")
-
-    with tab2:
-        st.markdown("**:blue[1. Premier modèle]**")
-        st.markdown(":blue[Résidus]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(":blue[Metrics]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(' ')
+        st.write('#### Revue des données à classifier')
+        st.markdown('Le DataFrame utilisé pour la classification multiple comporte : \n')
+        c1, c2 = st.columns((1.5, 1.5))
         
-        st.markdown("**:blue[2. Modèle optimisé]**")
-        st.markdown(":blue[Résidus]")
-        st.markdown("reblablabla et reblablabla")
-        st.markdown(":blue[Metrics]")
-        st.markdown("reblablabla et reblablabla")
-        st.markdown(' ')
+        with c1:
+            st.markdown('Les variables catégorielles :\n')
+            st.write(var_cat.head())
+            st.markdown('Les variables numériques :\n')
+            st.write(var_num.head())       
+        
+        with c2:
+            st.markdown('La variable cible :\n')
+            st.write(target_class.head())
+            st.markdown('Répartition de la variable cible :')
+            sns.countplot(target_class)
+            st.pyplot()
+            
+    with tab2:
+        st.markdown("##### Quel modèle voulez-vous analyser? 👇")
+        choix_model = st.radio(" ",
+                             ["SVM",
+                              "KNN",
+                              "Random Forest"],
+                           key="visibility",
+                           horizontal = True)
+        
+        c1, c2, c3 = st.columns((1.2, 1.5, 1.5))
+        
+        
+        if choix_model == 'SVM':
+            model = SVC(gamma = 'scale')
+            model_optim = SVC(C = 200, 
+                              kernel = 'rbf', 
+                              gamma = 0.1) 
+           
+        if choix_model == 'KNN':
+            model = KNeighborsClassifier()
+            model_optim = KNeighborsClassifier(n_neighbors = 1, 
+                                               metric = 'minkowski', 
+                                               leaf_size = 1)
+            
+        if choix_model == 'Random Forest':            
+            model = RandomForestClassifier()
+            model_optim = RandomForestClassifier(n_estimators = 400,
+                                                 criterion = 'gini',
+                                                 max_features = 'sqrt')        
+                   
+        # Prédictions
+        y_pred, score = classification(model, X_train, y_train, X_test, y_test)
+        y_pred_optim, score_optim = classification(model_optim, X_train, y_train, X_test, y_test)
+        
+        #Les matrices de confusion obtenues
+        matrix = confusion_matrix(y_test, y_pred)
+        matrix_optim = confusion_matrix(y_test, y_pred_optim)
+        
+        fig = plt.figure(figsize = (10,10))
+        st.set_option('deprecation.showPyplotGlobalUse', False)
+
+        # Espacement des graphes:
+        plt.subplots_adjust(left=0.1,
+                            bottom=0.1,
+                            right=0.9,
+                            top=0.9,
+                            wspace=0.5,
+                            hspace=0.4)
+        with c1:
+            st.write("##### **Metrics:**")
+            st.write('Le modèle standard a une accuracy de', round(score, 2))        
+            st.write('Le modèle optimisé a une accuracy de', round(score_optim, 2))
+            
+        with c2:
+            plt.subplot(121)
+            matrice(matrix, 'Matrice de confusion du modèle standard')
+            st.write('Le rapport de classification standard')
+            st.text(classification_report(y_test, y_pred)) 
+            
+        
+        with c3:
+            plt.subplot(122)
+            matrice(matrix_optim, 'Matrice de confusion du modèle optimisé')
+            st.write('Le rapport de classification optimisée')
+            st.text(classification_report(y_test, y_pred_optim)) 
+                
         
         
     with tab3:
+        
+        """# Affichage et comparaison des 3 matrices de confusion des 3 modèles optimisés
+        st.write("Comparaison des matrices de confusion des 3 modèles optimisés \n")
+
+        plt.figure(figsize = (16,6))
+
+        # Espacement des graphes:
+        plt.subplots_adjust(left=0.1,
+                            bottom=0.1,
+                            right=0.9,
+                            top=0.9,
+                            wspace=0.5,
+                            hspace=0.4)
+
+        # Matrice de confusion du modèle SVM optimisé:
+        plt.subplot(131)
+        matrice(cnf_matrix_svc_opt, 'Matrice de confusion du modèle SVM optimisé')
+
+        # Matrice de confusion du modèle KNN optimisé:
+        plt.subplot(132)
+        matrice(cnf_matrix_knn_opt, 'Matrice de confusion du modèle knn optimisé')
+
+        # Matrice de confusion du modèle RF optimisé:
+        plt.subplot(133)
+        matrice(cnf_matrix_rf_opt, 'Matrice de confusion du modèle RF optimisé')
         st.markdown("**:blue[Vous avez carte blanche! Sélectionnez vous-même les hyperparamètres et tentez d'être meilleur que l'algorithme GridSearchCV!]**")
         st.markdown(":blue[Résidus]")
         st.markdown("blablabla et blablabla")
         st.markdown(":blue[Metrics]")
         st.markdown("blablabla et blablabla")
-        st.markdown(' ')
+<<<<<<< Updated upstream
+        st.markdown(' ')"""
 
 
 #_______________________________________________________________________________________________________
@@ -1272,5 +1453,4 @@ if page == pages[5]:
             
             
             
-            
-            
+                
