@@ -19,8 +19,6 @@ import streamlit as st
 # commercialisés en France en 2013
 df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
 
-
-
     #---------------------------------------------------------------------------------------------------------
     #                                                    Streamlit 
     #---------------------------------------------------------------------------------------------------------
@@ -52,7 +50,7 @@ with st.sidebar:
 ## Affichage du titre et du plan dans la sidebar:
 st.sidebar.title('Projet CO2 Predict')    
 pages = ['Accueil','Introduction','Exploration et analyse des données', 
-         'Modélisation : Regression multiple', 'Modélisation : Classification', 'Interprétabilité SHAP multi-classes', 
+         'Modélisation : Régression multiple', 'Modélisation : Classification', 'Interprétabilité SHAP multi-classes', 
          "Prévoyez les rejets de CO2 et la classe d'émission de votre véhicule!", 'Conclusion']
 
 st.sidebar.markdown('**Sélectionnez une page:**')
@@ -87,47 +85,55 @@ if page == pages[1]:
        
     st.write('### Visualisation du dataset')
     st.dataframe(df_2013.head())
-    
+
 
 #------------------------------------  Page 2 : exploration des données ---------------------------------------------
 
 if page == pages[2]:
     st.write('## Exploration et analyse des données')
     
-    st.write('### Variables explicatives')
-    st.write('Deux types de variables explicatives sont disponibles : 11 qualitatives et 13 quantitatives')
-    st.caption('Certaines variables sont redondantes (colorées de la même façon ci-dessous)')
+    tab1, tab2, tab3, tab4 = st.tabs(['Variables explicatives', 'Preprocessing', 'Dataviz', 'Heatmap'])
+    
+    with tab1:
+ 
+        st.write('Deux types de variables explicatives sont disponibles : 11 qualitatives et 13 quantitatives')
+        st.write('Le dataset de départ contient 44 850 lignes')
+        st.caption('Certaines variables sont redondantes (colorées de la même façon ci-dessous)')
    
-    var_num_2013 = df_2013.select_dtypes(exclude = 'object') # On récupère les variables numériques
-    var_cat_2013 = df_2013.select_dtypes(include = 'object') # On récupère les variables catégorielles
+        var_num_2013 = df_2013.select_dtypes(exclude = 'object') # On récupère les variables numériques
+        var_cat_2013 = df_2013.select_dtypes(include = 'object') # On récupère les variables catégorielles
 
-    tab_num=pd.DataFrame(var_num_2013.columns,columns=['Quantitatives'])
-    tab_cat=pd.DataFrame(var_cat_2013.columns,columns=['Qualitatives'])
+        tab_num=pd.DataFrame(var_num_2013.columns,columns=['Quantitatives'])
+        tab_cat=pd.DataFrame(var_cat_2013.columns,columns=['Qualitatives'])
     
     # table pour présenter les données qualitatives et quantitatives
-    table1 = pd.concat([tab_num,tab_cat],axis=1).fillna('')
+        table1 = pd.concat([tab_num,tab_cat],axis=1).fillna('')
     
        #on définit des couleurs identiques poru les variables semblables
-    def couleur1(val):
-        color='white' if val not in ('Modèle UTAC' 'Modèle dossier' 'Désignation commerciale') else 'paleturquoise'
-        return 'background-color:%s' % color
-
+        def couleur1(val):
+           color='white' if val not in ('Modèle UTAC' 'Modèle dossier' 'Désignation commerciale') else 'paleturquoise'
+           return 'background-color:%s' % color
      
     # code pour masquer les index
-    hide_table_row_index = """
+        hide_table_row_index = """
             <style>
             thead tr th:first-child {display:none}
             tbody th {display:none}
             </style>
             """
     # Inject CSS with Markdown
-    st.markdown(hide_table_row_index, unsafe_allow_html=True)
+        st.markdown(hide_table_row_index, unsafe_allow_html=True)
 
     # Display a static table
-    st.table(table1.style.applymap(couleur1))
+        st.table(table1.style.applymap(couleur1))
 
+    with tab2:
 
-
+        st.write('Etapes du preprocessing :')
+        st.write('- suppression des doublons')
+        st.write('- suppression des modalités sous-représentées')
+        st.write('- suppression des modalités sous-représentées')
+        st.write('- suppression des doublons suite au 1er traitement')
 
 #_______________________________________________________________________________________________________
 #
@@ -406,9 +412,9 @@ def graph_res_sfm(y_train, y_test, pred_train, pred_test):
 
 # ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
 if page == pages[3]:
-    st.write('#### Modélisation: Régréssion multiple')
-    st.markdown("Chaque modèle de régréssion a été construit selon la même structure:  \n - un **premier modèle général** est généré à partir de l'ensemble des variables du dataset,  \n - un **second modèle affiné** est calculé après sélection des variables les plus influentes.")
-    tab1, tab2, tab3, tab4 = st.tabs(['Analyse de la variable cible CO₂', 'Régréssions multiples', 'Comparaison des modèles', 'A vous de jouer!'])
+    st.write('#### Modélisation: Régression multiple')
+    st.markdown("Chaque modèle de régression a été construit selon la même structure:  \n - un **premier modèle général** est généré à partir de l'ensemble des variables du dataset,  \n - un **second modèle affiné** est calculé après sélection des variables les plus influentes.")
+    tab1, tab2, tab3, tab4 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples', 'Comparaison des modèles', 'A vous de jouer!'])
     
     with tab1:
         c1, c2 = st.columns((1,1))
@@ -547,7 +553,7 @@ if page == pages[3]:
                 
                 graph4D = st.radio("",
                                    ["Vidéo", "Vue 1", "Vue 2", "Vue 3", "Vue 4"],
-                                   key="visibility",
+                                   #key="visibility",
                                    horizontal = True)
                 if graph4D == 'Vidéo':
                     st.video('Graphe_4D.mp4', format="video/mp4", start_time=0)
@@ -569,19 +575,19 @@ if page == pages[3]:
         
     with tab2:
         st.markdown("##### Quel dataset voulez-vous analyser? 👇")
-        choix_dataset = st.radio(" ",
+        choix_dataset = st.radio("",
                              ["Dataset complet (véhicules essence et diesel)",
                               "Véhicules diesel uniquement",
                               "Véhicules essence uniquement"],
-                           key="visibility",
-                           horizontal = True)
+                             #key="visibility",
+                             horizontal = True)
         
         st.write('___')
         st.markdown("##### Quel modèle voulez-vous analyser? 👇")
         choix_model = st.radio(" ",
                              ["Modèle général",
                               "Modéle affiné"],
-                           key="visibility",
+                           #key="visibility",
                            horizontal = True)
         st.write('___')
                               
