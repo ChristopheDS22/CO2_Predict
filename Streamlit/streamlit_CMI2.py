@@ -14,7 +14,6 @@ import plotly.graph_objects as go
 import streamlit as st
 
 
-
 # Emissions de polluants, CO2 et caractéristiques des véhicules
 # commercialisés en France en 2013
 df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
@@ -178,6 +177,9 @@ from joblib import dump, load
 
 from sklearn.model_selection import train_test_split
 
+import matplotlib as mpl
+
+
 
 # CHARGEMENT DES JEUX DE DONNEES NETTOYES ET DES TARGETS CORRESPONDANTES: ----------------------------------------------------------------------------
 
@@ -249,28 +251,38 @@ def selecteur(X_train, y_train, X_test, y_test):
 
 def metrics_sfm(lr_sfm, X_train, y_train, X_test, y_test, pred_train, pred_test, sfm_train, sfm_test):
     # Affichage des metrics:
-    st.write("R² modèle_train =", round(lr_sfm.score(sfm_train, y_train),2))
+    residus = pred_train - y_train 
+    residus_std = residus/np.sqrt(np.sum(residus**2)/(len(residus)-1))
+    x, pval = jarque_bera(residus_std)
+    st.write('p_value test de normalité de Jarque-Bera: =', round(pval,2)) 
+    st.write("")
+    st.write("R² train =", round(lr_sfm.score(sfm_train, y_train),2))
     st.write("R² obtenu par CV =", round(cross_val_score(lr_sfm,sfm_train,y_train).mean(),2))
-    st.write("R² modèle_test =", round(lr_sfm.score(sfm_test, y_test),2))
+    st.write("R² test =", round(lr_sfm.score(sfm_test, y_test),2))
     st.write("")
     st.write('RMSE train =', round(np.sqrt(mean_squared_error(y_train, pred_train)),2))
     st.write('RMSE test =', round(np.sqrt(mean_squared_error(y_test, pred_test)),2))
     st.write("")
-    st.write("MAE_train:", round(mean_absolute_error(y_train, pred_train),2))
-    st.write("MAE_test:", round(mean_absolute_error(y_test, pred_test),2))
+    st.write("MAE train:", round(mean_absolute_error(y_train, pred_train),2))
+    st.write("MAE test:", round(mean_absolute_error(y_test, pred_test),2))
 
 
 def metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test):
     # Affichage des metrics:
-    st.write("R² modèle_train =", round(lr.score(X_train, y_train),2))
+    residus = pred_train - y_train 
+    residus_std = residus/np.sqrt(np.sum(residus**2)/(len(residus)-1))
+    x, pval = jarque_bera(residus_std)
+    st.write('p_value test de normalité de Jarque-Bera: =', round(pval,2)) 
+    st.write("")
+    st.write("R² train =", round(lr.score(X_train, y_train),2))
     st.write("R² obtenu par CV =", round(cross_val_score(lr,X_train,y_train, cv = 5).mean(),2))
-    st.write("R² modèle_test =", round(lr.score(X_test, y_test),2))
+    st.write("R² test =", round(lr.score(X_test, y_test),2))
     st.write("")
-    st.write('RMSE_train =', round(np.sqrt(mean_squared_error(y_train, pred_train)),2))
-    st.write('RMSE_test =', round(np.sqrt(mean_squared_error(y_test, pred_test)),2))
+    st.write('RMSE train =', round(np.sqrt(mean_squared_error(y_train, pred_train)),2))
+    st.write('RMSE test =', round(np.sqrt(mean_squared_error(y_test, pred_test)),2))
     st.write("")
-    st.write("MAE_train:", round(mean_absolute_error(y_train, pred_train),2))
-    st.write("MAE_test:", round(mean_absolute_error(y_test, pred_test),2))
+    st.write("MAE train:", round(mean_absolute_error(y_train, pred_train),2))
+    st.write("MAE test:", round(mean_absolute_error(y_test, pred_test),2))
     
 def coef_lr(lr, X_train):
     # Représentation des coefficients:
@@ -334,7 +346,7 @@ def graph_res(y_train, y_test, pred_train, pred_test):
     
     ## Graphe boxplot des résidus:
     plt.subplot(2,2,3)
-    sns.boxplot(residus)
+    sns.boxplot(residus, notch=True)
     plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
     plt.title('Boite à moustache des résidus')
     plt.xlabel('résidus')
@@ -365,7 +377,8 @@ def graph_res_sfm(y_train, y_test, pred_train, pred_test):
     plt.subplots_adjust(left=0.1,
                         bottom=0.1,
                         right=0.9,
-                        top=0.9,wspace=0.2,
+                        top=0.9,
+                        wspace=0.2,
                         hspace=0.4)
     
     plt.rcParams['axes.facecolor'] = 'whitesmoke'
@@ -391,7 +404,7 @@ def graph_res_sfm(y_train, y_test, pred_train, pred_test):
     
     ## Graphe boxplot des résidus:
     plt.subplot(2,2,3)
-    sns.boxplot(residus)
+    sns.boxplot(residus, notch=True)
     plt.title('Boite à moustache des résidus')
     plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
     plt.xlabel('résidus')
@@ -407,19 +420,296 @@ def graph_res_sfm(y_train, y_test, pred_train, pred_test):
     st.pyplot(fig)
     
     return [residus, residus_norm, residus_std]
+
+# Création d'un DataFrame regroupant les données d'origine de df enrichi des valeurs ajustées,
+# des résidus, des distances de cook
+def df_res(sfm_train, y_train, pred_train, residus):
+    #chargement data:
+    #dfdata = pd.read_csv('data.csv', index_col = 0)
+    
+    #Analyse statsmodel:
+    X = sfm_train
+    X = sm.add_constant(X) #ajout d'une constante
+    y = y_train
+    model = sm.OLS(y, X)
+    results = model.fit()
+    
+    # distance de Cook (= identification des points trop influents):
+    influence = results.get_influence() # results DOIT être un model de statsmodels
+    (c, p) = influence.cooks_distance  # c = distance et p = p-value
+    
+    # AJOUT DES VARIABLES CALCULEES A DF (pred_train, résidus, résidus normalisés et distance de cook)
+    
+    #PRED_TRAIN:
+    
+    ## Création d'un DataFrame stockant pred_train en conservant les index et arrondir à une décimale:
+    y_pred = pd.DataFrame(pred_train, index = sfm_train.index)
+    y_pred= pd.DataFrame(y_pred.rename(columns ={0:'pred_train'}))
+    y_pred = round(y_pred.pred_train,1)
+   
+    ## Création df1 (= Ajout de pred_train à df):
+    df1 = df.join(y_pred)
+    
+    ## Suppression des Nans:
+    df1 = df1.dropna()
+    
+    #RESIDUS:
+    
+    ## Création d'un DataFrame stockant les résidus:
+    res = pd.DataFrame(residus)
+    res.rename(columns ={'CO2':'residus'}, inplace = True)
+    
+    ## Ajout des résidus à df1:
+    df1 = df1.join(res)
+    
+    # RESIDUS NORMALISES:
+    
+    ## Création d'un DataFrame stockant les résidus noramlisés:
+    res_norm = pd.DataFrame(residus_norm)
+    res_norm.rename(columns ={'CO2':'residus_normalisés'}, inplace = True)
+    
+    ## Ajout des résidus normalisés à df1:
+    df1 = df1.join(res_norm)
+    
+    ## Labelisation des résidus normalisés à 2 écarts-types:
+    liste = []
+    for residus in df1.residus_normalisés:
+        if residus >2 or residus <-2:
+            liste.append('res norm ±2 σ')
+        else:
+            liste.append('ok')
+    ## ajout liste (=résidus normalisés labélisés à 2 EC) à df1:
+    df1['res_norm_±2_σ'] = liste
+    
+    ## Labelisation des résidus normalisés à 3 écarts-types:
+    liste = []
+    for residus in df1.residus_normalisés:
+        if residus >3 or residus <-3:
+            liste.append('res norm ±3 σ')
+        else:
+            liste.append('ok')
+    ## ajout liste (=résidus normalisés labélisés à 3 EC) à df1:
+    df1['res_norm_±3_σ'] = liste
+    
+    # DISTANCE DE COOK:
+    
+    ## Création d'un DataFrame stockant les distances de Cook:
+    dist_cook = pd.DataFrame(c, index = res_norm.index)
+    dist_cook.rename(columns ={0:'dist_cook'}, inplace = True)
+    
+    ## Ajout des distances de Cook à df1:
+    df1 = df1.join(dist_cook)
+    
+    ## Labelisation des distances de Cook:
+    liste = []
+    for dist in df1.dist_cook:
+        if dist > 4/len(y_train) or dist > 1:
+            liste.append('observation influente')
+        else:
+            liste.append('observation non influente')
+    ## ajout liste (=résidus normalisés labélisés à 3 EC) à df1:
+    df1['observation_influente'] = liste
+    
+    # Validation des résidus élevés à 2 et 3 écarts-types:
+    st.write('Pourcentage des résidus à ±2 ecarts-types (doit être <0.05) =',round(df1[(df1['residus_normalisés']>2)|(df1['residus_normalisés']<-2)].residus_normalisés.count()/df1.residus_normalisés.count(), 3))
+    st.write('Pourcentage des résidus à ±3 ecarts-types (doit être <0.003) =',round(df1[(df1['residus_normalisés']>3)|(df1['residus_normalisés']<-3)].residus_normalisés.count()/df1.residus_normalisés.count(), 3))
+    st.write('')
+
+    
+    # Affichage des valeurs les plus influentes du modèle:  
+    fig = plt.figure(figsize = (15,5))
+    ax = fig.add_subplot(111)
+    ax.scatter(df1[df1['observation_influente'] == 'observation influente'].pred_train, df1[df1['observation_influente'] == 'observation influente'].residus, color = 'orange', label = 'observation influente')
+    ax.scatter(df1[df1['observation_influente'] == 'observation non influente'].pred_train, df1[df1['observation_influente'] == 'observation non influente'].residus, alpha = 0.2, label = 'observation non influente')
+    ax.plot((df1.pred_train.min(), df1.pred_train.max()), (0, 0), lw=3, color='red')
+    ax.plot((df1.pred_train.min(), df1.pred_train.max()), (2*df1.residus.std(), 2*df1.residus.std()), 'r-', lw=1.5, label = '2 σ') 
+    ax.plot((df1.pred_train.min(), df1.pred_train.max()), (3*df1.residus.std(), 3*df1.residus.std()), 'r--', lw=1.5, label = '3 σ')
+    ax.plot((df1.pred_train.min(), df1.pred_train.max()), (-2*df1.residus.std(), -2*df1.residus.std()), 'r-',lw=1.5)
+    ax.plot((df1.pred_train.min(), df1.pred_train.max()), (-3*df1.residus.std(), -3*df1.residus.std()), 'r--', lw=1.5)
+    ax.set(title='Résidus en fonction de pred_train (valeurs ajustées)')
+    ax.set(xlabel='pred_train (valeurs ajustées)')
+    ax.set(ylabel='Résidus')
+    ax.legend()
+    st.pyplot(fig) 
+    
+    st.write('')
+    st.write('')
+    st.write('')
+    st.markdown("###### Analyse des résidus à: 👇")
+    choix_EC = st.radio("",
+                           ["±2 écarts-types",
+                            "±3 écarts-types",
+                            "résidus influant trop fortement sur le modèle (distance de Cook)"],
+                           key="visibility")
+    st.write('')
+    st.write('')
+    st.write('')
+
+    # Représentation graphique des résidus - de quoi sont composés ces résidus élevés? - qu'est-ce qui les caractérisent?:
+    
+    if choix_EC != 'résidus influant trop fortement sur le modèle (distance de Cook)':
+        
+        if choix_EC == '±2 écarts-types':
+            EC = 2
+            res_boxplot = 'res_norm_±2_σ'
+                
+        if choix_EC == '±3 écarts-types':
+            EC = 3
+            res_boxplot = 'res_norm_±3_σ'
+        
+        st.markdown('###### Répartition des résidus élevés selon les variables catégorielles')
+        
+        # Représentation graphique des résidus - de quoi sont composés ces résidus élevés?:
+        fig = plt.figure(figsize = (16,8))
+        plt.subplots_adjust(left=0.1,
+                            bottom=0.1,
+                            right=0.9,
+                            top=0.9,
+                            wspace=0,
+                            hspace=0.1)
+        # Graphe Marque:
+        plt.subplot(221)
+        plt.pie(df1.Marque[(df1['residus_normalisés']>EC)|(df1['residus_normalisés']<-EC)].value_counts(),
+                        labels = df1.Marque[(df1['residus_normalisés']>EC)|(df1['residus_normalisés']<-EC)].value_counts().index,
+                       labeldistance=1.2,
+                       pctdistance = 0.8,
+                       autopct = lambda x: str(round(x,2))+'%',
+                       shadow =True)
+            
+        # Graphe Carburant:
+        plt.subplot(222)
+        plt.pie(df1.Carrosserie[(df1['residus_normalisés']>EC)|(df1['residus_normalisés']<-EC)].value_counts(),
+                        labels = df1.Carrosserie[(df1['residus_normalisés']>EC)|(df1['residus_normalisés']<-EC)].value_counts().index,
+                        autopct = lambda x: str(round(x,2))+'%',
+                        labeldistance=1.2,
+                        pctdistance = 0.8,
+                        shadow =True)
+            
+        # Graphe gamme:
+        plt.subplot(223)
+        plt.pie(df1.gamme2[(df1['residus_normalisés']>EC)|(df1['residus_normalisés']<-EC)].value_counts(),
+                labels = df1.gamme2[(df1['residus_normalisés']>EC)|(df1['residus_normalisés']<-EC)].value_counts().index,
+                autopct = lambda x: str(round(x,2))+'%',
+                labeldistance=1.2,
+                pctdistance = 0.8,
+                shadow =True)
+        
+        
+        # Graphe carburant:
+        plt.subplot(224)
+        plt.pie(df1.Carburant[(df1['residus_normalisés']>EC)|(df1['residus_normalisés']<-EC)].value_counts(),
+                labels = df1.Carburant[(df1['residus_normalisés']>EC)|(df1['residus_normalisés']<-EC)].value_counts().index,
+                autopct = lambda x: str(round(x,2))+'%',
+                pctdistance = 0.8,
+                shadow =True)
+        st.pyplot(fig)
+        
+        st.write('')
+        st.write('')
+        st.write('')
+        
+        st.markdown('###### Comparaison des puissance maximales et des masses en fonction de la valeur des résidus')
+        
+        fig = plt.figure(figsize = (10,3.5))    
+        plt.subplots_adjust(left=0.1,
+                            bottom=0.1,
+                            right=1,
+                            top=1,
+                            wspace=0.4,
+                            hspace=0)
+        plt.subplot(121)
+        sns.boxplot(data = df1, x = res_boxplot, y = 'puiss_max')
+            
+        plt.subplot(122)
+        sns.boxplot(data = df1, x = res_boxplot, y = 'masse_ordma_min')
+        st.pyplot(fig)
+        
+ 
+    
+    if choix_EC == 'résidus influant trop fortement sur le modèle (distance de Cook)':
+        fig = plt.figure(figsize = (16,8))
+        plt.subplots_adjust(left=0.1,
+                            bottom=0.1,
+                            right=0.9,
+                            top=0.9,
+                            wspace=0,
+                            hspace=0.1)
+        # Graphe Marque:
+        plt.subplot(221)
+        plt.pie(df1.Marque[(df1['observation_influente'] == 'observation influente')|(df1['observation_influente'] == 'observation influente')].value_counts(),
+                        labels = df1.Marque[(df1['observation_influente'] == 'observation influente')|(df1['observation_influente'] == 'observation influente')].value_counts().index,
+                       labeldistance=1.2,
+                       pctdistance = 0.8,
+                       autopct = lambda x: str(round(x,2))+'%',
+                       shadow =True)
+            
+        # Graphe Carburant:
+        plt.subplot(222)
+        plt.pie(df1.Carrosserie[(df1['observation_influente'] == 'observation influente')|(df1['observation_influente'] == 'observation influente')].value_counts(),
+                        labels = df1.Carrosserie[(df1['observation_influente'] == 'observation influente')|(df1['observation_influente'] == 'observation influente')].value_counts().index,
+                       labeldistance=1.2,
+                       pctdistance = 0.8,
+                       autopct = lambda x: str(round(x,2))+'%',
+                       shadow =True)
+            
+        # Graphe gamme:
+        plt.subplot(223)
+        plt.pie(df1.gamme2[(df1['observation_influente'] == 'observation influente')|(df1['observation_influente'] == 'observation influente')].value_counts(),
+                        labels = df1.gamme2[(df1['observation_influente'] == 'observation influente')|(df1['observation_influente'] == 'observation influente')].value_counts().index,
+                       labeldistance=1.2,
+                       pctdistance = 0.8,
+                       autopct = lambda x: str(round(x,2))+'%',
+                       shadow =True)
+        
+        
+        # Graphe carburant:
+        plt.subplot(224)
+        plt.pie(df1.Carburant[(df1['observation_influente'] == 'observation influente')|(df1['observation_influente'] == 'observation influente')].value_counts(),
+                        labels = df1.Carburant[(df1['observation_influente'] == 'observation influente')|(df1['observation_influente'] == 'observation influente')].value_counts().index,
+                       labeldistance=1.2,
+                       pctdistance = 0.8,
+                       autopct = lambda x: str(round(x,2))+'%',
+                       shadow =True)
+        st.pyplot(fig)
+        
+        st.write('')
+        st.write('')
+        st.write('')
+        
+        st.markdown('###### Comparaison des puissance maximales et des masses en fonction de la valeur des résidus')
+        
+        fig = plt.figure(figsize = (10,3.5))    
+        plt.subplots_adjust(left=0.1,
+                            bottom=0.1,
+                            right=1,
+                            top=1,
+                            wspace=0.4,
+                            hspace=0)
+        plt.subplot(121)
+        sns.boxplot(data = df1, x = df1['observation_influente'], y = 'puiss_max')
+            
+        plt.subplot(122)
+        sns.boxplot(data = df1, x = df1['observation_influente'], y = 'masse_ordma_min')
+        st.pyplot(fig)
     
     
 
 # ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
 if page == pages[3]:
+<<<<<<< HEAD
     st.write('#### Modélisation: Régression multiple')
     st.markdown("Chaque modèle de régression a été construit selon la même structure:  \n - un **premier modèle général** est généré à partir de l'ensemble des variables du dataset,  \n - un **second modèle affiné** est calculé après sélection des variables les plus influentes.")
     tab1, tab2, tab3, tab4 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples', 'Comparaison des modèles', 'A vous de jouer!'])
+=======
+    st.write('#### Modélisation: Régréssion multiple')
+    
+    tab1, tab2, tab3 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples', 'A vous de jouer!'])
+>>>>>>> 597d65f44bfa481b5d4e8f71f04911fbfc12107d
     
     with tab1:
         c1, c2 = st.columns((1,1))
         with c1:
-            st.markdown("##### Choississez le type d'analyse de la variable cible CO₂ 👇")
+            st.markdown("###### Choississez le type d'analyse de la variable cible CO₂ 👇")
             Analyse_Y = st.radio(" ",
                                  ["Analyse globale", "Analyse par type de carburant"],
                                key="visibility",
@@ -430,7 +720,7 @@ if page == pages[3]:
             dist = pd.DataFrame(target_reg)
             
             if Analyse_Y == "Analyse globale":
-                fig = plt.figure(figsize =(10,5))
+                fig = plt.figure(figsize =(8,5))
                 
                 # Espacement des graphes:
                 plt.subplots_adjust(left=0.1,
@@ -539,11 +829,12 @@ if page == pages[3]:
                 sns.boxplot(data = df, y = 'Carburant' , x = 'CO2', palette = ['green','gold'], notch=True)
                 plt.xticks(rotation = 'vertical')
                 plt.title('Boite à moustache de CO₂ (g/km) en fonction du type de carburant')
-                plt.xlabel('CO2 (g/km)')
+                plt.xlabel('CO₂ (g/km)')
                 plt.xlim(0,400)
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 
                 st.pyplot(fig)
+<<<<<<< HEAD
                 
                 st.write('___')
                 
@@ -589,6 +880,34 @@ if page == pages[3]:
                               "Modéle affiné"],
                            #key="visibility",
                            horizontal = True)
+=======
+ 
+        
+    with tab2:
+        st.markdown("**Méthodologie**:  \n1. sélection du dataset,  \n2. construction d'un premier modèle général à partir de l'ensemble des variables du dataset,  \n3. construction d'un second modèle affiné après sélection des variables les plus influentes,  \n3. pour chaque modèle: analyse des metrics et résidus et sélection des données les plus pertinentes, puis retour à l'étape 1")
+        st.write('___')
+        c1, c2, c3= st.columns((0.4, 0.4, 1))
+        with c1:
+            st.markdown("###### Dataset à analyser: 👇")
+            choix_dataset = st.radio("",
+                                     ["Dataset complet (véhicules essence et diesel)",
+                                      "Véhicules diesel uniquement",
+                                      "Véhicules essence uniquement"],
+                                     key="visibility")
+        
+        with c2:
+            st.markdown("###### Modèle de régression à analyser: 👇")
+            choix_model = st.radio("",
+                                   ["Modèle général",
+                                    "Modèle affiné"],
+                                   key="visibility")
+        with c3:
+             st.markdown("###### Analyse: 👇")
+             choix_param = st.radio("",
+                                    ["Metrics & Coefficients des variables",
+                                     "Résidus"],
+                                    key="visibility")
+>>>>>>> 597d65f44bfa481b5d4e8f71f04911fbfc12107d
         st.write('___')
                               
         if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
@@ -606,48 +925,92 @@ if page == pages[3]:
             cible = target_es
             model = 'lr_es.joblib'
         
-
-        c1, c2, c3 = st.columns((0.7, 1, 2.3))
-        
         if choix_model == "Modèle général":
-            with c1:
-                st.write("##### **Metrics:**")
-                st.write('')
-            
             #Standardisation, split du dataset, régression:
                 X_train, X_test, y_train, y_test = standardisation_lr(dataset, cible)
                 lr, pred_train, pred_test = regression_lineaire(model, X_train, y_train, X_test, y_test)
-                metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test)
-            
-            with c2:
-                st.write("##### **Coefficients des variables:**")
-                coef_lr(lr, X_train)
-            
-            with c3:
-                st.write("##### **Analyse graphique des résidus:**")
-                residus, residus_norm, residus_std = graph_res(y_train, y_test,
-                                                               pred_train,
-                                                               pred_test)
-        if choix_model == "Modéle affiné":
-            with c1:
-                st.write("##### **Metrics:**")
-                st.write('')
-            
+        
+        if choix_model == "Modèle affiné":
             #Standardisation, split du dataset, régression:
                 X_train, X_test, y_train, y_test = standardisation_lr(dataset, cible)
                 lr_sfm, pred_train, pred_test, sfm_train, sfm_test = selecteur(X_train, y_train, X_test, y_test)
-                metrics_sfm(lr_sfm, X_train, y_train, X_test, y_test, pred_train, pred_test, sfm_train, sfm_test)
+        
+        if choix_param == "Metrics & Coefficients des variables":
+            c1, c2, c3, c4 = st.columns((1, 1.2, 0.2, 1.1))
+            if choix_model == "Modèle général":
+                with c1:
+                    st.write("##### **Metrics:**")
+                    st.write('')
+                    metrics_lr(lr, X_train, y_train, X_test, y_test, pred_train, pred_test)
             
-            with c2:
-                st.write("##### **Coefficients des variables retenues par le modèle:**")
-                coef_sfm(lr_sfm, sfm_train)    
+                with c2:
+                    st.write("##### **Coefficients des variables:**")
+                    coef_lr(lr, X_train)
             
-            with c3:
-                st.write("##### **Analyse graphique des résidus:**")
-                residus, residus_norm, residus_std = graph_res_sfm(y_train, y_test,
+            if choix_model == "Modèle affiné":
+                with c1:
+                    st.write("##### **Metrics:**")
+                    st.write('')
+                    metrics_sfm(lr_sfm, X_train, y_train, X_test, y_test, pred_train, pred_test, sfm_train, sfm_test)
+                    
+                with c2:
+                    st.write("##### **Coefficients des variables retenues par le modèle:**")
+                    coef_sfm(lr_sfm, sfm_train)
+                
+                with c4:
+                    
+                    if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
+                        st.markdown("##### Représentation graphique de la cible CO₂ par type de carburant en fonction de la masse et de la puissance des véhicules:")
+                        import streamlit as st
+                        from PIL import Image
+                            
+                        graph4D = st.radio("",
+                                           ["Vidéo", "Vue 1", "Vue 2", "Vue 3", "Vue 4"],
+                                           key="visibility",
+                                           horizontal = True)
+                        if graph4D == 'Vidéo':
+                            st.video('Graphe_4D.mp4', format="video/mp4", start_time=0)
+                        if graph4D == 'Vue 1':
+                            image = Image.open('4D1.png')
+                            st.image(image)
+                        if graph4D == 'Vue 2':
+                            image = Image.open('4D2.png')
+                            st.image(image)
+                        if graph4D == 'Vue 3':
+                            image = Image.open('4D3.png')
+                            st.image(image)
+                        if graph4D == 'Vue 4':
+                            image = Image.open('4D4.png')
+                            st.image(image)
+                                            
+        if choix_param == "Résidus":
+            c1, c2 = st.columns((1.3, 1))
+            if choix_model == "Modèle général":
+                with c1:
+                    st.write("##### **Analyse graphique des résidus:**")
+                    residus, residus_norm, residus_std = graph_res(y_train, y_test,
                                                                    pred_train,
                                                                    pred_test)
-        
+                    st.write('')
+                    st.write('')
+                    st.write('')
+                    
+                    st.write("##### **Analyse graphique spécifique des résidus élevés et fortement influents:**")               
+                    df_res(X_train, y_train, pred_train, residus)
+                    
+            if choix_model == "Modèle affiné":
+                with c1:
+                    st.write("##### **Analyse graphique des résidus:**")
+                    residus, residus_norm, residus_std = graph_res_sfm(y_train, y_test,
+                                                                       pred_train,
+                                                                       pred_test)
+                    st.write('')
+                    st.write('')
+                    st.write('')
+                    
+                    st.write("##### **Analyse graphique spécifique des résidus élevés et fortement influents:**")               
+                    df_res(sfm_train, y_train, pred_train, residus)
+    
         
     with tab3:
         st.markdown("**:blue[1. Premier modèle]**")
@@ -664,15 +1027,7 @@ if page == pages[3]:
         st.markdown("reblablabla et reblablabla")
         st.markdown(' ')
         
-        
-    with tab4:
-        st.markdown("**:blue[Vous avez carte blanche! Sélectionnez vous-même les paramètres et tentez d'être meilleur que l'algorithme SFM!]**")
-        st.markdown(":blue[Résidus]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(":blue[Metrics]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(' ')
-        
+
 
 #------------------------------------  Page 4 : classification ---------------------------------------------
 
