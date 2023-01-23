@@ -980,7 +980,6 @@ if page == pages[4]:
         st.caption("Graphique")
         st.caption("Interprétation")
 
-        
     with tab2:
         st.markdown("**:blue[1. Premier modèle]**")
         st.markdown(":blue[Résidus]")
@@ -1004,3 +1003,189 @@ if page == pages[4]:
         st.markdown(":blue[Metrics]")
         st.markdown("blablabla et blablabla")
         st.markdown(' ')
+
+
+#_______________________________________________________________________________________________________
+#
+#                                   Page 5 : Interprétation SHAP multi-classes 
+#_______________________________________________________________________________________________________
+
+#CHARGEMENT DES LIBRAIRIES: ----------------------------------------------------------------------------
+
+import shap
+from sklearn.tree import plot_tree
+
+# CHARGEMENT DES MODELES: ------------------------------------------------------------------------
+shap_values_rf = load('shap_values_rf.joblib')
+shap_values_rf_opt = load('shap_values_rf_opt.joblib')
+shap_values_svc_opt = load('shap_values_svc_opt.joblib')
+shap_values_knn_opt = load('shap_values_knn_opt.joblib')
+
+df_class = pd.read_csv('df.csv', index_col = 0)
+df_class = df_class.drop('Cat_CO2', axis = 1)
+df_class = df_class.drop('CO2', axis = 1)
+
+target_class = pd.read_csv('target_class.csv', index_col = 0)
+target_class = target_class.squeeze()
+
+# Preprocessing dataset:
+  
+# On sépare les variables numériques et catégorielles
+var_num = df_class.select_dtypes(exclude = 'object') # On récupère les variables numériques
+var_cat = df_class.select_dtypes(include = 'object') # On récupère les variables catégorielles
+
+# Les variables catégorielles sont transformées en indicatrices
+var_cat_ind = pd.get_dummies(var_cat, drop_first = True)
+
+# On récupère les variables explicatives
+feats = var_num.join(var_cat_ind)
+
+
+# Pour rappel, le dataset feats regroupe les variables numériques et catégorielles
+# On répartit équitablement les classes entre les jeux d'entrainement et de test.
+X_train, X_test, y_train, y_test = train_test_split(feats, target_class,
+                                                    test_size = 0.25,
+                                                    random_state = 2,
+                                                    stratify = target_class)
+
+# Les variables numériques doivent être standardisées
+cols = ['puiss_max', 'masse_ordma_min']
+sc = StandardScaler()
+X_train[cols] = sc.fit_transform(X_train[cols])
+X_test[cols] = sc.transform(X_test[cols])
+
+# ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
+if page == pages[5]:
+    st.write('#### Interprétation SHAP multi-classes')
+    st.markdown("###### Modèle de classification à analyser: 👇")
+    choix_model_shap = st.radio("",
+                             ["Random Forest",
+                              "Random Forest optimisé",
+                              "SVC optimisé",
+                              "KNN optimisé"],
+                             key="visibility",
+                             horizontal=True)
+    
+    if choix_model_shap == "Random Forest optimisé":
+        model = 'rf_opt'
+        shap_values = shap_values_rf_opt
+    if choix_model_shap == "SVC optimisé":
+        model = 'svc_opt'
+        shap_values = shap_values_svc_opt
+    if choix_model_shap == "KNN optimisé":
+        model = 'knn_opt'
+        shap_values = shap_values_knn_opt
+    if choix_model_shap == "Random Forest":
+        model = 'knn'
+        shap_values = shap_values_rf
+    st.write('')
+    st.write('')
+
+    tab1, tab2, tab3 = st.tabs(['Interprétabilité globale', 'Interprétabilité locale', 'A vous de jouer!'])
+    
+    with tab1:
+        c1, c2, c3, c4 = st.columns((0.7, 0.1, 0.75, 0.2))
+        with c1:
+            st.write("L'interprétabilité globale permet d'expliquer le fonctionnement du modèle de point de vue général.")
+            st.write('')
+            st.markdown("###### Summary plot à afficher: 👇")
+            choix_model_shap = st.radio("",
+                                     ["summary plot global",
+                                      "summary plot par catégorie"],
+                                     key="visibility",
+                                     horizontal=True)
+            
+            if choix_model_shap == "summary plot par catégorie":
+                st.write('')
+                st.write('')
+                st.markdown("###### Catégorie à analyser: 👇")
+                choix_categorie = st.radio("",
+                                     ["Catégorie A",
+                                      "Catégorie B",
+                                      "Catégorie C",
+                                      "Catégorie D",
+                                      "Catégorie E",
+                                      "Catégorie F",
+                                      "Catégorie G"],
+                                     key="visibility",
+                                     horizontal=True)
+                
+        with c3:  
+            st.write('')
+            st.write('')
+            st.write('')
+            st.write('')
+            st.write('')
+            st.write('')
+            if choix_model_shap == "summary plot global":
+            # Summary_plot:
+                fig = plt.figure()
+                shap.summary_plot(shap_values,
+                                  X_test,
+                                  plot_type="bar",
+                                  class_names = ['A', 'B', 'C', 'D', 'E', 'F','G'])
+                st.pyplot(fig)
+                
+            if choix_model_shap == "summary plot par catégorie":                
+                if choix_categorie == "Catégorie A":
+                    fig = plt.figure()
+                    shap.summary_plot(shap_values[0],
+                                      X_test,
+                                      feature_names=feats.columns)
+                    st.pyplot(fig)
+                
+                if choix_categorie == "Catégorie B":
+                    fig = plt.figure()
+                    shap.summary_plot(shap_values[1],
+                                      X_test,
+                                      feature_names=feats.columns)
+                    st.pyplot(fig)
+                    
+                if choix_categorie == "Catégorie C":
+                    fig = plt.figure()
+                    shap.summary_plot(shap_values[2],
+                                      X_test,
+                                      feature_names=feats.columns)
+                    st.pyplot(fig)
+                    
+                if choix_categorie == "Catégorie D":
+                    fig = plt.figure()
+                    shap.summary_plot(shap_values[3],
+                                      X_test,
+                                      feature_names=feats.columns)
+                    st.pyplot(fig)
+                    
+                if choix_categorie == "Catégorie E":
+                    fig = plt.figure()
+                    shap.summary_plot(shap_values[4],
+                                      X_test,
+                                      feature_names=feats.columns)
+                    st.pyplot(fig)
+                    
+                if choix_categorie == "Catégorie F":
+                    fig = plt.figure()
+                    shap.summary_plot(shap_values[5],
+                                      X_test,
+                                      feature_names=feats.columns)
+                    st.pyplot(fig)
+                    
+                if choix_categorie == "Catégorie G":
+                    fig = plt.figure()
+                    shap.summary_plot(shap_values[6],
+                                      X_test,
+                                      feature_names=feats.columns)
+                    st.pyplot(fig)
+                    
+    with tab2:
+        c1, c2  = st.columns((0.75, 1))
+        with c1:
+            st.write("L'interprétabilité locale permet d'expliquer le fonctionnement du modèle pour une instance.")
+            st.write('')
+            st.write('AFFICHER MATRICE CORRESPONDANT AU MODELE SELECTIONNE')
+            
+
+            
+            
+            
+            
+            
