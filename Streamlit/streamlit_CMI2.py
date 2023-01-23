@@ -91,7 +91,7 @@ if page == pages[1]:
 if page == pages[2]:
     st.write('## Exploration et analyse des données')
     
-    tab1, tab2, tab3, tab4 = st.tabs(['Variables explicatives', 'Preprocessing', 'Dataviz', 'Heatmap'])
+    tab1, tab2, tab3 = st.tabs(['Variables explicatives', 'Preprocessing', 'Liens entre variables'])
     
     with tab1:
  
@@ -127,12 +127,34 @@ if page == pages[2]:
         st.table(table1.style.applymap(couleur1))
 
     with tab2:
+        
+        st.write('**Etapes du preprocessing :**')
+        st.write('- Suppression des doublons (619)')
+        st.write('- Traitement des valeurs manquantes : concerne uniquement les variables quantitatives, remplacement par les moyennes des valeurs non manquantes')
+        st.write('- Suppression des modalités sous-représentées:')
+        
 
-        st.write('Etapes du preprocessing :')
-        st.write('- suppression des doublons')
-        st.write('- suppression des modalités sous-représentées')
-        st.write('- suppression des modalités sous-représentées')
-        st.write('- suppression des doublons suite au 1er traitement')
+        fig1=px.histogram(df_2013,x="Carburant",color = 'Carburant',color_discrete_sequence=px.colors.qualitative.Pastel)
+        fig1.update_layout(title_text='Variable "Carburant" avant preprocessing', title_x=0.5)
+        
+        fig2=px.histogram(data,x="Carburant") 
+        fig2.update_layout(title_text='Variable "Carburant" après preprocessing', title_x=0.5)
+        
+        data_container=st.container()
+        with data_container:
+            commentaires,plot1, plot2 = st.columns(3)
+            with commentaires:
+                st.write('La variable carburant possède un grand nombre de modalités')
+            with plot1:
+                st.plotly_chart(fig1, use_container_width=True)
+            with plot2:
+                st.plotly_chart(fig2, use_container_width=True)
+        
+        st.write('- Sélection des variables utiles')
+        st.write('- Suppression des doublons suite aux premiers traitements')
+
+    with tab3:
+        st.write('Variable "carburant"')
 
 #_______________________________________________________________________________________________________
 #
@@ -696,15 +718,15 @@ def df_res(sfm_train, y_train, pred_train, residus):
 
 # ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
 if page == pages[3]:
-<<<<<<< HEAD
+#<<<<<<< HEAD
     st.write('#### Modélisation: Régression multiple')
     st.markdown("Chaque modèle de régression a été construit selon la même structure:  \n - un **premier modèle général** est généré à partir de l'ensemble des variables du dataset,  \n - un **second modèle affiné** est calculé après sélection des variables les plus influentes.")
-    tab1, tab2, tab3, tab4 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples', 'Comparaison des modèles', 'A vous de jouer!'])
-=======
-    st.write('#### Modélisation: Régréssion multiple')
+    
+#=======
+    st.write('#### Modélisation: Régression multiple')
     
     tab1, tab2, tab3 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples', 'A vous de jouer!'])
->>>>>>> 597d65f44bfa481b5d4e8f71f04911fbfc12107d
+#>>>>>>> 597d65f44bfa481b5d4e8f71f04911fbfc12107d
     
     with tab1:
         c1, c2 = st.columns((1,1))
@@ -834,7 +856,7 @@ if page == pages[3]:
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 
                 st.pyplot(fig)
-<<<<<<< HEAD
+#<<<<<< HEAD
                 
                 st.write('___')
                 
@@ -880,7 +902,7 @@ if page == pages[3]:
                               "Modéle affiné"],
                            #key="visibility",
                            horizontal = True)
-=======
+#=======
  
         
     with tab2:
@@ -907,7 +929,7 @@ if page == pages[3]:
                                     ["Metrics & Coefficients des variables",
                                      "Résidus"],
                                     key="visibility")
->>>>>>> 597d65f44bfa481b5d4e8f71f04911fbfc12107d
+#>>>>>>> 597d65f44bfa481b5d4e8f71f04911fbfc12107d
         st.write('___')
                               
         if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
