@@ -70,6 +70,19 @@ st.sidebar.write(' ')
 st.sidebar.write('### Mentor:')
 st.sidebar.write('Dan Cohen')
 
+
+
+#Chargement des datasets---------------------------------------------------
+
+# Emissions de polluants, CO2 et caractéristiques des véhicules
+# commercialisés en France en 2013
+df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
+data = pd.read_csv('data.csv', index_col = 0)
+target_reg = pd.read_csv('target_reg.csv', index_col = 0)
+target_reg = target_reg.squeeze()
+
+
+
 #------------------------------------  Page 0 : accueil ----------------------------------------------------
 if page == pages[0]:
     from PIL import Image
@@ -221,11 +234,6 @@ import matplotlib as mpl
 
 
 # CHARGEMENT DES JEUX DE DONNEES NETTOYES ET DES TARGETS CORRESPONDANTES: ----------------------------------------------------------------------------
-
-data = pd.read_csv('data.csv', index_col = 0)
-target_reg = pd.read_csv('target_reg.csv', index_col = 0)
-target_reg = target_reg.squeeze()
-
 data_go = pd.read_csv('data_go.csv', index_col = 0)
 target_go = pd.read_csv('target_go.csv', index_col = 0)
 target_go = target_go.squeeze()
@@ -237,8 +245,6 @@ target_es = target_es.squeeze()
 df = pd.read_csv('df.csv', index_col = 0)
 df.CO2 = target_reg
 
-
-# CHARGEMENT DES MODELES: ------------------------------------------------------------------------
 
 
 # FONCTIONS: ----------------------------------------------------------------------------
@@ -867,52 +873,8 @@ if page == pages[3]:
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 
                 st.pyplot(fig)
-                
-                st.write('___')
-                
-                st.markdown("##### Graphe 4D représentant les rejets de CO₂ par type de carburant en fonction de la masse et de la puissance des véhicules.  \n##### Naviguez dans le graphe 4D en choisissant la vue 👇")
-                import streamlit as st
-                from PIL import Image
-                
-                graph4D = st.radio("",
-                                   ["Vidéo", "Vue 1", "Vue 2", "Vue 3", "Vue 4"],
-                                   #key="visibility",
-                                   horizontal = True)
-                if graph4D == 'Vidéo':
-                    st.video('Graphe_4D.mp4', format="video/mp4", start_time=0)
-                if graph4D == 'Vue 1':
-                    image = Image.open('4D1.png')
-                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-                if graph4D == 'Vue 2':
-                    image = Image.open('4D2.png')
-                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-                if graph4D == 'Vue 3':
-                    image = Image.open('4D3.png')
-                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
-                if graph4D == 'Vue 4':
-                    image = Image.open('4D4.png')
-                    st.image(image, caption='Représentation des rejets de CO₂ des  véhicules en fonction de leurs masses, leurs poids et leurs carburants')
 
-               
- 
-        
-    with tab2:
-        st.markdown("##### Quel dataset voulez-vous analyser? 👇")
-        choix_dataset = st.radio("",
-                             ["Dataset complet (véhicules essence et diesel)",
-                              "Véhicules diesel uniquement",
-                              "Véhicules essence uniquement"],
-                             #key="visibility",
-                             horizontal = True)
-        
-        st.write('___')
-        st.markdown("##### Quel modèle voulez-vous analyser? 👇")
-        choix_model = st.radio(" ",
-                             ["Modèle général",
-                              "Modéle affiné"],
-                           #key="visibility",
-                           horizontal = True)
-      
+     
     with tab2:
         st.markdown("**Méthodologie**:  \n1. sélection du dataset,  \n2. construction d'un premier modèle général à partir de l'ensemble des variables du dataset,  \n3. construction d'un second modèle affiné après sélection des variables les plus influentes,  \n3. pour chaque modèle: analyse des metrics et résidus et sélection des données les plus pertinentes, puis retour à l'étape 1")
         st.write('___')
@@ -922,23 +884,20 @@ if page == pages[3]:
             choix_dataset = st.radio("",
                                      ["Dataset complet (véhicules essence et diesel)",
                                       "Véhicules diesel uniquement",
-                                      "Véhicules essence uniquement"],
-                                     key="visibility")
+                                      "Véhicules essence uniquement"])
         
         with c2:
             st.markdown("###### Modèle de régression à analyser: 👇")
             choix_model = st.radio("",
                                    ["Modèle général",
-                                    "Modèle affiné"],
-                                   key="visibility")
+                                    "Modèle affiné"])
         with c3:
              st.markdown("###### Analyse: 👇")
              choix_param = st.radio("",
                                     ["Metrics & Coefficients des variables",
-                                     "Résidus"],
-                                    key="visibility")
+                                     "Résidus"])
 
-        st.write('___')
+
                               
         if choix_dataset == 'Dataset complet (véhicules essence et diesel)':
             dataset = data
@@ -1014,7 +973,7 @@ if page == pages[3]:
                             st.image(image)
                                             
         if choix_param == "Résidus":
-                    
+            c1, c2 = st.columns((1.3, 1))                
             if choix_model == "Modèle général":
                 with c1:
                     st.write("##### **Analyse graphique des résidus:**")
@@ -1057,6 +1016,7 @@ if page == pages[3]:
         st.markdown("reblablabla et reblablabla")
         st.markdown(' ')
         
+
 
 
 #_______________________________________________________________________________________________________
@@ -1287,6 +1247,13 @@ shap_values_rf_opt = load('shap_values_rf_opt.joblib')
 shap_values_svc_opt = load('shap_values_svc_opt.joblib')
 shap_values_knn_opt = load('shap_values_knn_opt.joblib')
 
+matrix_rf = load('matrice_rf.joblib')
+matrix_rf_opt = load('matrice_rf_opt.joblib')
+matrix_knn = load('matrice_knn.joblib')
+matrix_knn_opt = load('matrice_knn_opt.joblib')
+matrix_svm = load('matrice_svm.joblib')
+matrix_svm_opt = load('matrice_svm_opt.joblib')
+
 df_class = pd.read_csv('df.csv', index_col = 0)
 df_class = df_class.drop('Cat_CO2', axis = 1)
 df_class = df_class.drop('CO2', axis = 1)
@@ -1294,7 +1261,7 @@ df_class = df_class.drop('CO2', axis = 1)
 target_class = pd.read_csv('target_class.csv', index_col = 0)
 target_class = target_class.squeeze()
 
-# Preprocessing dataset:
+# Preprocessing dataset:-----------------------------------------------------------------------------
   
 # On sépare les variables numériques et catégorielles
 var_num = df_class.select_dtypes(exclude = 'object') # On récupère les variables numériques
@@ -1329,21 +1296,24 @@ if page == pages[5]:
                               "Random Forest optimisé",
                               "SVC optimisé",
                               "KNN optimisé"],
-                             key="visibility",
                              horizontal=True)
     
     if choix_model_shap == "Random Forest optimisé":
         model = 'rf_opt'
         shap_values = shap_values_rf_opt
+        matrix = matrix_rf_opt
     if choix_model_shap == "SVC optimisé":
         model = 'svc_opt'
         shap_values = shap_values_svc_opt
+        matrix = matrix_svm_opt
     if choix_model_shap == "KNN optimisé":
         model = 'knn_opt'
         shap_values = shap_values_knn_opt
+        matrix = matrix_knn_opt
     if choix_model_shap == "Random Forest":
-        model = 'knn'
+        model = 'rf'
         shap_values = shap_values_rf
+        matrix = matrix_rf
     st.write('')
     st.write('')
 
@@ -1358,7 +1328,6 @@ if page == pages[5]:
             choix_model_shap = st.radio("",
                                      ["summary plot global",
                                       "summary plot par catégorie"],
-                                     key="visibility",
                                      horizontal=True)
             
             if choix_model_shap == "summary plot par catégorie":
@@ -1373,7 +1342,6 @@ if page == pages[5]:
                                       "Catégorie E",
                                       "Catégorie F",
                                       "Catégorie G"],
-                                     key="visibility",
                                      horizontal=True)
                 
         with c3:  
@@ -1447,9 +1415,16 @@ if page == pages[5]:
         with c1:
             st.write("L'interprétabilité locale permet d'expliquer le fonctionnement du modèle pour une instance.")
             st.write('')
-            st.write('AFFICHER MATRICE CORRESPONDANT AU MODELE SELECTIONNE')
             
+        c1, c2  = st.columns((0.4, 1.6))
+        with c1:
+            fig = plt.figure(figsize = (12,12))
+            plt.subplot(121)
+            matrice(matrix, 'Matrice de confusion')
+            st.pyplot(fig)
+         
 
+            
             
             
             
