@@ -12,13 +12,13 @@ import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-
+from streamlit_shap import st_shap
 
 # Emissions de polluants, CO2 et caractéristiques des véhicules
 # commercialisés en France en 2013
 df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
-
-
+df_2013_nettoye = pd.read_csv('df_2013_nettoye.csv' , sep = ';', encoding='unicode_escape')
+df = pd.read_csv('df.csv', index_col = 0)
 
     #---------------------------------------------------------------------------------------------------------
     #                                                    Streamlit 
@@ -45,7 +45,6 @@ st.markdown(
 )
 
 with st.sidebar:
-    #st.image('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSjyFyh-ZmDnq_yXzkVBt6L-c-9gwqxt0vZRw&usqp=CAU')
     st.image('https://www.fiches-auto.fr/sdoms/shiatsu/uploaded/part-effet-de-serre-co2-automobile-2.jpg')
  
 ## Affichage du titre et du plan dans la sidebar:
@@ -54,7 +53,7 @@ pages = ['Accueil','Introduction','Exploration et analyse des données',
          'Modélisation : Régression multiple', 'Modélisation : Classification', 'Interprétabilité SHAP multi-classes', 
          "Prévoyez les rejets de CO2 et la classe d'émission de votre véhicule!", 'Conclusion']
 
-st.sidebar.markdown('**Sélectionnez une page:**')
+st.sidebar.markdown('**Sommaire**')
 page = st.sidebar.radio('', pages)
 
 ## Affichage des auteurs et mentor en bas de la sidebar:
@@ -155,31 +154,102 @@ if page == pages[2]:
         st.write('**Etapes du preprocessing :**')
         st.write('- Suppression des doublons (619)')
         st.write('- Traitement des valeurs manquantes : concerne uniquement les variables quantitatives, remplacement par les moyennes des valeurs non manquantes')
-        st.write('- Suppression des modalités sous-représentées:')
+        st.write('- Suppression des modalités sous-représentées :')
         
 
         fig1=px.histogram(df_2013,x="Carburant",color = 'Carburant',color_discrete_sequence=px.colors.qualitative.Pastel)
         fig1.update_layout(title_text='Variable "Carburant" avant preprocessing', title_x=0.5)
+        fig1.update_xaxes(categoryorder='total descending')
         
-        fig2=px.histogram(data,x="Carburant") 
-        fig2.update_layout(title_text='Variable "Carburant" après preprocessing', title_x=0.5)
+        fig2=px.histogram(df,x="Carburant",color = 'Carburant',color_discrete_sequence=px.colors.qualitative.Pastel) 
+        fig2.update_layout(title_text='Variable "Carburant" après preprocessing', title_x=0.5,yaxis_range=[0,35000])
+        fig2.update_xaxes(categoryorder='total descending')
         
         data_container=st.container()
         with data_container:
-            commentaires,plot1, plot2 = st.columns(3)
+            commentaires,plot1, plot2 = st.columns([0.5,1,1])
             with commentaires:
-                st.write('La variable carburant possède un grand nombre de modalités')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write('La variable carburant possède un grand nombre de modalités."Essence" et "Gasole" représentent plus de 99 % du portefeuille, on ne conserve donc que ces deux modalités ')
             with plot1:
                 st.plotly_chart(fig1, use_container_width=True)
             with plot2:
                 st.plotly_chart(fig2, use_container_width=True)
-        
+
+        df_2013[['boite', 'rapport']]=df_2013['Boîte de vitesse'].str.split(expand=True)
+        fig3=px.histogram(df_2013,x='boite',color = 'boite',color_discrete_sequence=px.colors.qualitative.Pastel)
+        fig3.update_layout(title_text='Variable "boite" avant preprocessing', title_x=0.5)
+        fig3.update_xaxes(categoryorder='total descending')
+    
+        fig4=px.histogram(df,x="boite",color = 'boite',color_discrete_sequence=['MediumTurquoise','Plum'])
+        fig4.update_layout(title_text='Variable "boite" après preprocessing', title_x=0.5,yaxis_range=[0,25000])
+        fig4.update_xaxes(categoryorder='total ascending')
+    
+        data_container=st.container()
+        with data_container:
+            commentaires,plot3, plot4 = st.columns([0.5,1,1])
+            with commentaires:
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write('Même constat pour la variable "boite", sur laquelle seules les modalités "A" (Automatique) et "M" (Manuelle) sont conservées ')
+
+                with plot3:
+                    st.plotly_chart(fig3, use_container_width=True)
+                with plot4:
+                    st.plotly_chart(fig4, use_container_width=True)
+  
+        st.markdown(hide_table_row_index, unsafe_allow_html=True)
         st.write('- Sélection des variables utiles')
-        st.write('- Suppression des doublons suite aux premiers traitements')
+        
+
+        data_container=st.container()
+        with data_container:
+            commentaires,image= st.columns([0.5,1])
+            with commentaires:
+                st.write("- Création d'une variable Cat_CO2 discrète issue de CO2 sur la base des normes suivantes:")       
+            with image:
+                from PIL import Image
+                image0 = Image.open('norm CO2.jpg')
+                st.image(image0,caption='')
+    
+        st.write('- Suppression des doublons suite aux premiers traitements (restent 5 020 lignes)')
+        st.write('- La base après preprocessing est la suivante (les variables CO2 et Cat_CO2 sont les variables à expliquer):')
+       #on définit des couleurs identiques poru les variables semblables
+
+        st.dataframe(df.head())
+
 
     with tab3:
-        st.write('Variable "carburant"')
-
+        commentaires,graphe= st.columns([0.5,1])
+        with commentaires:
+            st.write('Matrice de corrélation:')
+            fig, ax = plt.subplots(figsize = (3, 3))
+            sns.set(font_scale=0.5)
+            sns.heatmap(df.corr(), annot = True, ax = ax, cmap = 'magma');
+            st.pyplot(fig)
+        
+        #with graphe:
+        #   fig, ax = plt.subplots(figsize = (2, 2))
+        #   var2=df.drop(['Cat_CO2','Marque','Carburant','Carrosserie','boite','gamme2'],axis=1)
+        #    st.write(var2.head())
+        #    sns.pairplot(data = var2,
+        #     x_vars = var2.columns,
+        #     y_vars = var2.columns)
+        #    plt.title('Graphique matriciel')
+        #    st.pyplot(fig)
 
 #_______________________________________________________________________________________________________
 #
@@ -743,7 +813,7 @@ def df_res(sfm_train, y_train, pred_train, residus):
 if page == pages[3]:
     st.write('#### Modélisation: Régréssion multiple')
     
-    tab1, tab2, tab3 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples', 'A vous de jouer!'])
+    tab1, tab2 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples'])
     
     with tab1:
         c1, c2 = st.columns((1,1))
@@ -1001,23 +1071,6 @@ if page == pages[3]:
                     df_res(sfm_train, y_train, pred_train, residus)
     
         
-    with tab3:
-        st.markdown("**:blue[1. Premier modèle]**")
-        st.markdown(":blue[Résidus]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(":blue[Metrics]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(' ')
-        
-        st.markdown("**:blue[2. Modèle affiné]**")
-        st.markdown(":blue[Résidus]")
-        st.markdown("reblablabla et reblablabla")
-        st.markdown(":blue[Metrics]")
-        st.markdown("reblablabla et reblablabla")
-        st.markdown(' ')
-        
-
-
 
 #_______________________________________________________________________________________________________
 #
@@ -1026,7 +1079,23 @@ if page == pages[3]:
 
 # CHARGEMENT DES JEUX DE DONNEES NETTOYES ET DES TARGETS CORRESPONDANTES: ------------------------------
 df = pd.read_csv('Model_C02.csv', index_col = 0)
-    
+
+## Matrice de confusion de chaque modèle:
+matrix_rf = load('matrice_rf.joblib')
+matrix_rf_opt = load('matrice_rf_opt.joblib')
+matrix_knn = load('matrice_knn.joblib')
+matrix_knn_opt = load('matrice_knn_opt.joblib')
+matrix_svm = load('matrice_svm.joblib')
+matrix_svm_opt = load('matrice_svm_opt.joblib')
+
+## Rapport de classification de chaque modèle:
+rap_rf = load('rapport_class_rf.joblib')
+rap_rf_opt = load('rapport_class_rf_opt.joblib')
+rap_knn = load('rapport_class_knn.joblib')
+rap_knn_opt = load('rapport_class_knn_opt.joblib')
+rap_svm = load('rapport_class_svm.joblib')
+rap_svm_opt = load('rapport_class_svm_opt.joblib')
+   
 # On sépare les variables numériques et catégorielles
 var_num = df.select_dtypes(exclude = 'object') # On récupère les variables numériques
 var_cat = df.select_dtypes(include = 'object') # On récupère les variables catégorielles
@@ -1059,21 +1128,22 @@ def classification(model, X_train, y_train, X_test, y_test):
 
 # Fonction pour afficher les 3 matrices de confusion des 3 modèles optimisés:
 def matrice(matrice, titre):
+    fig, ax = plt.subplots()
     classes = ['A','B','C','D','E','F','G']
-    plt.imshow(matrice, interpolation='nearest',cmap='Blues')
-    plt.title(titre)
+    ax.imshow(matrice, interpolation='nearest',cmap='Blues')
+    ax.set_title(titre)
     tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes)
-    plt.yticks(tick_marks, classes)
-    plt.grid(False)
+    ax.set_xticks(tick_marks, classes)
+    ax.set_yticks(tick_marks, classes)
+    ax.grid(False)
     
     for i, j in itertools.product(range(matrice.shape[0]), range(matrice.shape[1])):
-        plt.text(j, i, matrice[i, j],
+        ax.text(j, i, matrice[i, j],
                  horizontalalignment="center",
                  color="white" if (matrice[i, j] > ( matrice.max() / 2) or matrice[i, j] == 0) else "black")
-    plt.ylabel('Catégories réelles')
-    plt.xlabel('Catégories prédites')
-    st.pyplot()
+    ax.set_ylabel('Catégories réelles')
+    ax.set_xlabel('Catégories prédites')
+    st.pyplot(fig)
     
 def report(rapport, titre):
     classes = ['A','B','C','D','E','F','G']
@@ -1095,7 +1165,7 @@ if page == pages[4]:
     st.markdown("Explication de la démarche:  \n - un **premier modèle** est généré à partir de l'ensemble des hyperparamètres,  \n - un **second modèle optimisé** est généré après sélection des meilleurs hyperparamètres.")
     st.markdown('Nous procédons à une classification multiple. Nous avons donc choisi les classifieurs adaptés.')
     st.markdown('Nous en avons sélectionné 3 pour cette étude: SVM, KNN et Random Forest')
-    tab1, tab2, tab3, tab4 = st.tabs(['Données', 'Classifications multiples', 'Comparaison des modèles', 'A vous de jouer!'])
+    tab1, tab2, tab3 = st.tabs(['Données', 'Classifications multiples', 'Comparaison des modèles'])
     
     
     # Séparation en données d'entraînement et de test
@@ -1198,38 +1268,27 @@ if page == pages[4]:
         
     with tab3:
         
-        """# Affichage et comparaison des 3 matrices de confusion des 3 modèles optimisés
+        # Affichage et comparaison des 3 matrices de confusion des 3 modèles optimisés
         st.write("Comparaison des matrices de confusion des 3 modèles optimisés \n")
 
-        plt.figure(figsize = (16,6))
+        c1, c2, c3, c4 = st.columns((0.5, 0.5, 0.5, 0.5))
+        with c1:
+            # Matrice de confusion du modèle SVM optimisé:
+                plt.subplot(131)
+                matrice(matrix_svm_opt, 'Matrice de confusion du modèle SVM optimisé')
+                st.write(rap_svm_opt)
 
-        # Espacement des graphes:
-        plt.subplots_adjust(left=0.1,
-                            bottom=0.1,
-                            right=0.9,
-                            top=0.9,
-                            wspace=0.5,
-                            hspace=0.4)
+        with c2:
+            # Matrice de confusion du modèle KNN optimisé:
+                plt.subplot(132)
+                matrice(matrix_knn_opt, 'Matrice de confusion du modèle KNN optimisé')
+                st.write(rap_knn_opt)
 
-        # Matrice de confusion du modèle SVM optimisé:
-        plt.subplot(131)
-        matrice(cnf_matrix_svc_opt, 'Matrice de confusion du modèle SVM optimisé')
-
-        # Matrice de confusion du modèle KNN optimisé:
-        plt.subplot(132)
-        matrice(cnf_matrix_knn_opt, 'Matrice de confusion du modèle knn optimisé')
-
-        # Matrice de confusion du modèle RF optimisé:
-        plt.subplot(133)
-        matrice(cnf_matrix_rf_opt, 'Matrice de confusion du modèle RF optimisé')
-        st.markdown("**:blue[Vous avez carte blanche! Sélectionnez vous-même les hyperparamètres et tentez d'être meilleur que l'algorithme GridSearchCV!]**")
-        st.markdown(":blue[Résidus]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(":blue[Metrics]")
-        st.markdown("blablabla et blablabla")
-<<<<<<< Updated upstream
-        st.markdown(' ')"""
-
+        with c3:
+            # Matrice de confusion du modèle RF optimisé:
+                plt.subplot(133)
+                matrice(matrix_rf_opt, 'Matrice de confusion du modèle RF optimisé')
+                st.write(rap_rf_opt)
 
 #_______________________________________________________________________________________________________
 #
@@ -1242,21 +1301,31 @@ import shap
 from sklearn.tree import plot_tree
 
 # CHARGEMENT DES MODELES: ------------------------------------------------------------------------
-shap_values_rf = load('shap_values_rf.joblib')
+
+## Modèles:
+model_rf_opt = load('clf_rf_grid.joblib')
+model_knn_opt = load('clf_knn_grid.joblib')
+model_svm_opt = load('clf_svc_grid.joblib')
+
+
+## Explainers:
+explainer_rf_opt = load('explainer_rf_opt.expected_value.joblib')
+explainer_knn_opt = load('explainer_knn.expected_value.joblib')
+explainer_svm_opt = load('explainer_svm_opt.expected_value.joblib')
+
+## SHAP_VALUES:
 shap_values_rf_opt = load('shap_values_rf_opt.joblib')
-shap_values_svc_opt = load('shap_values_svc_opt.joblib')
 shap_values_knn_opt = load('shap_values_knn_opt.joblib')
+shap_values_svm_opt = load('shap_values_svm_opt.joblib')
 
-matrix_rf = load('matrice_rf.joblib')
-matrix_rf_opt = load('matrice_rf_opt.joblib')
-matrix_knn = load('matrice_knn.joblib')
-matrix_knn_opt = load('matrice_knn_opt.joblib')
-matrix_svm = load('matrice_svm.joblib')
-matrix_svm_opt = load('matrice_svm_opt.joblib')
 
+
+## Dataframes et Targets:
 df_class = pd.read_csv('df.csv', index_col = 0)
 df_class = df_class.drop('Cat_CO2', axis = 1)
 df_class = df_class.drop('CO2', axis = 1)
+
+X_test_75 = pd.read_csv('X_test_75.csv', index_col = 0)
 
 target_class = pd.read_csv('target_class.csv', index_col = 0)
 target_class = target_class.squeeze()
@@ -1290,34 +1359,66 @@ X_test[cols] = sc.transform(X_test[cols])
 # ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
 if page == pages[5]:
     st.write('#### Interprétation SHAP multi-classes')
-    st.markdown("###### Modèle de classification à analyser: 👇")
+    st.markdown("###### Modèle de classification à interpréter: 👇")
     choix_model_shap = st.radio("",
-                             ["Random Forest",
-                              "Random Forest optimisé",
-                              "SVC optimisé",
+                             ["Random Forest optimisé",
+                              "SVM optimisé",
                               "KNN optimisé"],
-                             horizontal=True)
+                             horizontal=False)
     
     if choix_model_shap == "Random Forest optimisé":
-        model = 'rf_opt'
+        model = model_rf_opt
         shap_values = shap_values_rf_opt
         matrix = matrix_rf_opt
-    if choix_model_shap == "SVC optimisé":
-        model = 'svc_opt'
-        shap_values = shap_values_svc_opt
+        titre_matrix = "Matrice de confusion - Random Forest optimisé"
+        explainer = explainer_rf_opt
+        df1_titre = ''
+        df1=''
+        choix_cat = "**Random Forest optimisé**: choisir les catégories d'après la marice de confusion"
+        choix_cat1 = "N'importe quel véhicule de X_test, composant la matrice de confusion, peut être analysé."
+        
+    if choix_model_shap == "SVM optimisé":
+        model = model_svm_opt
+        shap_values = shap_values_svm_opt
         matrix = matrix_svm_opt
+        titre_matrix = "Matrice de confusion - SVM optimisé"
+        explainer = explainer_svm_opt
+        X_test = X_test_75
+        y_test = y_test.loc[X_test.index]
+        df1 = df.join(pd.DataFrame(model.predict(X_test), index = y_test.index))
+        df1 = df1.join(df_2013['Désignation commerciale'])
+        df1 = df1.rename({0:'Cat_CO2_pred'}, axis = 1)
+        df1 = df1.join(pd.DataFrame(pd.DataFrame(model.predict(X_test)).index, index = y_test.index))
+        df1 = df1.rename({0:'index_shape'}, axis = 1)
+        df1 = df1.dropna(subset=['Cat_CO2_pred'])
+        df1 = df1[df1.columns[[8,9,0,10,1,2,3,4,5,6,7,11]]]
+        df1_titre = "Tableau regroupant les véhicules pouvant être analysés pour le modèles SVM optimisé"
+        choix_cat = "**SVM optimisé**: choisir le couple catégorie réelle / catégorie prédite d'après le tableau ci-dessus ☝️"
+        choix_cat1 = "Afin de diminuer les temps de calcul, seuls 75 véhicules, pris au hasard dans X_test, peuvent être analysés."
+        
     if choix_model_shap == "KNN optimisé":
-        model = 'knn_opt'
+        model = model_knn_opt
         shap_values = shap_values_knn_opt
         matrix = matrix_knn_opt
-    if choix_model_shap == "Random Forest":
-        model = 'rf'
-        shap_values = shap_values_rf
-        matrix = matrix_rf
+        titre_matrix = "Matrice de confusion - KNN optimisé"
+        explainer = explainer_knn_opt
+        X_test = X_test_75
+        y_test = y_test.loc[X_test.index]
+        df1 = df.join(pd.DataFrame(model.predict(X_test), index = y_test.index))
+        df1 = df1.join(df_2013['Désignation commerciale'])
+        df1 = df1.rename({0:'Cat_CO2_pred'}, axis = 1)
+        df1 = df1.join(pd.DataFrame(pd.DataFrame(model.predict(X_test)).index, index = y_test.index))
+        df1 = df1.rename({0:'index_shape'}, axis = 1)
+        df1 = df1.dropna(subset=['Cat_CO2_pred'])
+        df1 = df1[df1.columns[[8,9,0,10,1,2,3,4,5,6,7,11]]]
+        df1_titre = "Tableau regroupant les véhicules pouvant être analysés pour le modèle KNN optimisé"
+        choix_cat = "**KNN optimisé**: choisir le couple catégorie réelle / catégorie prédite d'après le tableau ci-dessus ☝️"       
+        choix_cat1 = "Afin de diminuer les temps de calcul, seuls 75 véhicules, pris au hasard dans X_test, peuvent être analysés."
+        
     st.write('')
     st.write('')
 
-    tab1, tab2, tab3 = st.tabs(['Interprétabilité globale', 'Interprétabilité locale', 'A vous de jouer!'])
+    tab1, tab2 = st.tabs(['Interprétabilité globale', 'Interprétabilité locale'])
     
     with tab1:
         c1, c2, c3, c4 = st.columns((0.7, 0.1, 0.75, 0.2))
@@ -1353,78 +1454,155 @@ if page == pages[5]:
             st.write('')
             if choix_model_shap == "summary plot global":
             # Summary_plot:
-                fig = plt.figure()
-                shap.summary_plot(shap_values,
-                                  X_test,
-                                  plot_type="bar",
-                                  class_names = ['A', 'B', 'C', 'D', 'E', 'F','G'])
-                st.pyplot(fig)
-                
+                st_shap(shap.summary_plot(shap_values,
+                              X_test,
+                              plot_type="bar",
+                              class_names = ['A', 'B', 'C', 'D', 'E', 'F','G']))
+                                
             if choix_model_shap == "summary plot par catégorie":                
                 if choix_categorie == "Catégorie A":
-                    fig = plt.figure()
-                    shap.summary_plot(shap_values[0],
-                                      X_test,
-                                      feature_names=feats.columns)
-                    st.pyplot(fig)
-                
+                    st_shap(shap.summary_plot(shap_values[0],
+                                  X_test,
+                                  feature_names=feats.columns))
+                                    
                 if choix_categorie == "Catégorie B":
-                    fig = plt.figure()
-                    shap.summary_plot(shap_values[1],
-                                      X_test,
-                                      feature_names=feats.columns)
-                    st.pyplot(fig)
-                    
+                    st_shap(shap.summary_plot(shap_values[1],
+                                  X_test,
+                                  feature_names=feats.columns))
+                                        
                 if choix_categorie == "Catégorie C":
-                    fig = plt.figure()
-                    shap.summary_plot(shap_values[2],
-                                      X_test,
-                                      feature_names=feats.columns)
-                    st.pyplot(fig)
-                    
+                    st_shap(shap.summary_plot(shap_values[2],
+                                  X_test,
+                                  feature_names=feats.columns))
+                                    
                 if choix_categorie == "Catégorie D":
-                    fig = plt.figure()
-                    shap.summary_plot(shap_values[3],
-                                      X_test,
-                                      feature_names=feats.columns)
-                    st.pyplot(fig)
-                    
+                    st_shap(shap.summary_plot(shap_values[3],
+                                  X_test,
+                                  feature_names=feats.columns))
+                                    
                 if choix_categorie == "Catégorie E":
-                    fig = plt.figure()
-                    shap.summary_plot(shap_values[4],
-                                      X_test,
-                                      feature_names=feats.columns)
-                    st.pyplot(fig)
-                    
+                    st_shap(shap.summary_plot(shap_values[4],
+                                  X_test,
+                                  feature_names=feats.columns))
+                                    
                 if choix_categorie == "Catégorie F":
-                    fig = plt.figure()
-                    shap.summary_plot(shap_values[5],
-                                      X_test,
-                                      feature_names=feats.columns)
-                    st.pyplot(fig)
-                    
+                    st_shap(shap.summary_plot(shap_values[5],
+                                  X_test,
+                                  feature_names=feats.columns))
+                                    
                 if choix_categorie == "Catégorie G":
-                    fig = plt.figure()
-                    shap.summary_plot(shap_values[6],
-                                      X_test,
-                                      feature_names=feats.columns)
-                    st.pyplot(fig)
+                    st_shap(shap.summary_plot(shap_values[6],
+                                  X_test,
+                                  feature_names=feats.columns))
                     
     with tab2:
-        c1, c2  = st.columns((0.75, 1))
+        c1, c2  = st.columns((1, 0.1))
         with c1:
             st.write("L'interprétabilité locale permet d'expliquer le fonctionnement du modèle pour une instance.")
             st.write('')
-            
-        c1, c2  = st.columns((0.4, 1.6))
+        
+        c1, c2, c3  = st.columns((0.4, 0.1, 1.6))
+        
         with c1:
-            fig = plt.figure(figsize = (12,12))
-            plt.subplot(121)
-            matrice(matrix, 'Matrice de confusion')
-            st.pyplot(fig)
-         
-
+            plt.subplot(111)
+            matrice(matrix, titre_matrix)
+                        
             
+        with c3:
+            st.write(df1_titre)
+            st.write(df1)
+        
+        c1, c2  = st.columns((1, 0.1))
+        with c1:
+            st.write('___')
+        
+        c1, c2  = st.columns((1, 0.1))
+        with c1:
+            
+            st.write("###### Choisir les catégories réelle et prédite:  \n-", choix_cat, "  \n-", choix_cat1)
+            st.write('')
+            st.write('')
+            
+        c1, c2, c3 = st.columns((0.25, 0.25, 1))
+        with c1:
+            st.markdown("###### Catégorie réelle: 👇")
+            choix_cat_reel = st.radio("",
+                                      ["A",
+                                       "B",
+                                       "C",
+                                       "D",
+                                       "E",
+                                       "F",
+                                       "G"],
+                                      horizontal=False)
+        
+        with c2:    
+            st.markdown("###### Catégorie prédite: 👇")
+            choix_cat_pred = st.radio(" ",
+                                      ["A",
+                                       "B",
+                                       "C",
+                                       "D",
+                                       "E",
+                                       "F",
+                                       "G"],
+                                      horizontal=False)
+        c1, c2  = st.columns((1, 1))
+        with c1:
+            st.write('')
+            st.write('')
+            # Création d'un DataFrame regroupant par index (véhicules) les catégories réelles de pollution, les catégories prédites
+            # le modèle et l'index de y_pred
+            
+            df2 = df.join(pd.DataFrame(model.predict(X_test), index = y_test.index))
+            df2 = df2.join(df_2013['Désignation commerciale'])
+            df2 = df2.rename({0:'Cat_CO2_pred'}, axis = 1)
+            df2 = df2[(df2['Cat_CO2'] == choix_cat_reel)&(df2['Cat_CO2_pred'] == choix_cat_pred)]
+            df2 = df2.join(pd.DataFrame(pd.DataFrame(model.predict(X_test)).index, index = y_test.index))
+            df2 = df2.rename({0:'index_shape'}, axis = 1)
+            df2 = df2.dropna(subset=['Cat_CO2_pred'])
+            df2 = df2[df2.columns[[8,9,0,10,1,2,3,4,5,6,7,11]]]
+                        
+              
+            
+            st.dataframe(df2)
+                
+            st.write('')
+            st.markdown("###### D'après le tableau ci-dessus ☝️, choisir l'index du véhicule à analyser: 👇")
+            index = st.selectbox("",
+                                 df2.index)
+                                    
+            if index == None:
+                st.markdown("###### Aucun véhicule ne correspond à votre choix - Tous les véhicules n'ont pas pu être analysés avec ce modèle de classification  \n###### Veuillez vous référer au premier tableau, à droite de la matrice de confusion, pour choisir les bonnes catégories")
+            
+            else:
+                st.write('')
+                st.write('')
+                st.write("###### Vous avez choisi d'analyser ce véhicule:")
+                st.dataframe(df2[df2.index == index])
+                j=df2.loc[index].index_shape
+                
+                k = 0
+                liste = ['Catégorie A', 'Catégorie B', 'Catégorie C', 'Catégorie D','Catégorie E','Catégorie F','Catégorie G']
+                for k in range(0,7,1):
+                    st.caption(liste[k])
+                    st_shap(shap.force_plot(explainer[k], shap_values[k][j,:], X_test.iloc[j,:]))
+                    k = k+1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             
             
             
