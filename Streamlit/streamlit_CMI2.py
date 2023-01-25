@@ -1128,22 +1128,21 @@ def classification(model, X_train, y_train, X_test, y_test):
 
 # Fonction pour afficher les 3 matrices de confusion des 3 modèles optimisés:
 def matrice(matrice, titre):
-    fig, ax = plt.subplots()
     classes = ['A','B','C','D','E','F','G']
-    ax.imshow(matrice, interpolation='nearest',cmap='Blues')
-    ax.set_title(titre)
+    plt.imshow(matrice, interpolation='nearest',cmap='Blues')
+    plt.title(titre)
     tick_marks = np.arange(len(classes))
-    ax.set_xticks(tick_marks, classes)
-    ax.set_yticks(tick_marks, classes)
-    ax.grid(False)
+    plt.xticks(tick_marks, classes)
+    plt.yticks(tick_marks, classes)
+    plt.grid(False)
     
     for i, j in itertools.product(range(matrice.shape[0]), range(matrice.shape[1])):
-        ax.text(j, i, matrice[i, j],
+        plt.text(j, i, matrice[i, j],
                  horizontalalignment="center",
                  color="white" if (matrice[i, j] > ( matrice.max() / 2) or matrice[i, j] == 0) else "black")
-    ax.set_ylabel('Catégories réelles')
-    ax.set_xlabel('Catégories prédites')
-    st.pyplot(fig)
+    plt.ylabel('Catégories réelles')
+    plt.xlabel('Catégories prédites')
+    st.pyplot()
     
 def report(rapport, titre):
     classes = ['A','B','C','D','E','F','G']
@@ -1391,7 +1390,8 @@ if page == pages[5]:
         df1 = df1.join(pd.DataFrame(pd.DataFrame(model.predict(X_test)).index, index = y_test.index))
         df1 = df1.rename({0:'index_shape'}, axis = 1)
         df1 = df1.dropna(subset=['Cat_CO2_pred'])
-        df1 = df1[df1.columns[[8,9,0,10,1,2,3,4,5,6,7,11]]]
+        df1 = df1.rename({'CO2':'CO₂ (g/km)'}, axis = 1)
+        df1 = df1[df1.columns[[8,9,3,0,10,1,2,4,5,6,7,11]]]
         df1_titre = "Tableau regroupant les véhicules pouvant être analysés pour le modèles SVM optimisé"
         choix_cat = "**SVM optimisé**: choisir le couple catégorie réelle / catégorie prédite d'après le tableau ci-dessus ☝️"
         choix_cat1 = "Afin de diminuer les temps de calcul, seuls 75 véhicules, pris au hasard dans X_test, peuvent être analysés."
@@ -1410,7 +1410,8 @@ if page == pages[5]:
         df1 = df1.join(pd.DataFrame(pd.DataFrame(model.predict(X_test)).index, index = y_test.index))
         df1 = df1.rename({0:'index_shape'}, axis = 1)
         df1 = df1.dropna(subset=['Cat_CO2_pred'])
-        df1 = df1[df1.columns[[8,9,0,10,1,2,3,4,5,6,7,11]]]
+        df1 = df1.rename({'CO2':'CO₂ (g/km)'}, axis = 1)
+        df1 = df1[df1.columns[[8,9,3,0,10,1,2,4,5,6,7,11]]]
         df1_titre = "Tableau regroupant les véhicules pouvant être analysés pour le modèle KNN optimisé"
         choix_cat = "**KNN optimisé**: choisir le couple catégorie réelle / catégorie prédite d'après le tableau ci-dessus ☝️"       
         choix_cat1 = "Afin de diminuer les temps de calcul, seuls 75 véhicules, pris au hasard dans X_test, peuvent être analysés."
@@ -1421,7 +1422,7 @@ if page == pages[5]:
     tab1, tab2 = st.tabs(['Interprétabilité globale', 'Interprétabilité locale'])
     
     with tab1:
-        c1, c2, c3, c4 = st.columns((0.7, 0.1, 0.75, 0.2))
+        c1, c2 = st.columns((0.7, 2))
         with c1:
             st.write("L'interprétabilité globale permet d'expliquer le fonctionnement du modèle de point de vue général.")
             st.write('')
@@ -1445,7 +1446,7 @@ if page == pages[5]:
                                       "Catégorie G"],
                                      horizontal=True)
                 
-        with c3:  
+        with c2:  
             st.write('')
             st.write('')
             st.write('')
@@ -1560,8 +1561,9 @@ if page == pages[5]:
             df2 = df2[(df2['Cat_CO2'] == choix_cat_reel)&(df2['Cat_CO2_pred'] == choix_cat_pred)]
             df2 = df2.join(pd.DataFrame(pd.DataFrame(model.predict(X_test)).index, index = y_test.index))
             df2 = df2.rename({0:'index_shape'}, axis = 1)
+            df2 = df2.rename({'CO2':'CO₂ (g/km)'}, axis = 1)
             df2 = df2.dropna(subset=['Cat_CO2_pred'])
-            df2 = df2[df2.columns[[8,9,0,10,1,2,3,4,5,6,7,11]]]
+            df2 = df2[df2.columns[[8,9,3,0,10,1,2,4,5,6,7,11]]]
                         
               
             
