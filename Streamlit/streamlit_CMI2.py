@@ -14,12 +14,11 @@ import plotly.graph_objects as go
 import streamlit as st
 from streamlit_shap import st_shap
 
-
 # Emissions de polluants, CO2 et caractéristiques des véhicules
 # commercialisés en France en 2013
 df_2013 = pd.read_csv('data_2013.csv' , sep = ';', encoding='unicode_escape')
-
-
+df_2013_nettoye = pd.read_csv('df_2013_nettoye.csv' , sep = ';', encoding='unicode_escape')
+df = pd.read_csv('df.csv', index_col = 0)
 
     #---------------------------------------------------------------------------------------------------------
     #                                                    Streamlit 
@@ -155,31 +154,102 @@ if page == pages[2]:
         st.write('**Etapes du preprocessing :**')
         st.write('- Suppression des doublons (619)')
         st.write('- Traitement des valeurs manquantes : concerne uniquement les variables quantitatives, remplacement par les moyennes des valeurs non manquantes')
-        st.write('- Suppression des modalités sous-représentées:')
+        st.write('- Suppression des modalités sous-représentées :')
         
 
         fig1=px.histogram(df_2013,x="Carburant",color = 'Carburant',color_discrete_sequence=px.colors.qualitative.Pastel)
         fig1.update_layout(title_text='Variable "Carburant" avant preprocessing', title_x=0.5)
+        fig1.update_xaxes(categoryorder='total descending')
         
-        fig2=px.histogram(data,x="Carburant") 
-        fig2.update_layout(title_text='Variable "Carburant" après preprocessing', title_x=0.5)
+        fig2=px.histogram(df,x="Carburant",color = 'Carburant',color_discrete_sequence=px.colors.qualitative.Pastel) 
+        fig2.update_layout(title_text='Variable "Carburant" après preprocessing', title_x=0.5,yaxis_range=[0,35000])
+        fig2.update_xaxes(categoryorder='total descending')
         
         data_container=st.container()
         with data_container:
-            commentaires,plot1, plot2 = st.columns(3)
+            commentaires,plot1, plot2 = st.columns([0.5,1,1])
             with commentaires:
-                st.write('La variable carburant possède un grand nombre de modalités')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write('La variable carburant possède un grand nombre de modalités."Essence" et "Gasole" représentent plus de 99 % du portefeuille, on ne conserve donc que ces deux modalités ')
             with plot1:
                 st.plotly_chart(fig1, use_container_width=True)
             with plot2:
                 st.plotly_chart(fig2, use_container_width=True)
-        
+
+        df_2013[['boite', 'rapport']]=df_2013['Boîte de vitesse'].str.split(expand=True)
+        fig3=px.histogram(df_2013,x='boite',color = 'boite',color_discrete_sequence=px.colors.qualitative.Pastel)
+        fig3.update_layout(title_text='Variable "boite" avant preprocessing', title_x=0.5)
+        fig3.update_xaxes(categoryorder='total descending')
+    
+        fig4=px.histogram(df,x="boite",color = 'boite',color_discrete_sequence=['MediumTurquoise','Plum'])
+        fig4.update_layout(title_text='Variable "boite" après preprocessing', title_x=0.5,yaxis_range=[0,25000])
+        fig4.update_xaxes(categoryorder='total ascending')
+    
+        data_container=st.container()
+        with data_container:
+            commentaires,plot3, plot4 = st.columns([0.5,1,1])
+            with commentaires:
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write(' ')
+                st.write('Même constat pour la variable "boite", sur laquelle seules les modalités "A" (Automatique) et "M" (Manuelle) sont conservées ')
+
+                with plot3:
+                    st.plotly_chart(fig3, use_container_width=True)
+                with plot4:
+                    st.plotly_chart(fig4, use_container_width=True)
+  
+        st.markdown(hide_table_row_index, unsafe_allow_html=True)
         st.write('- Sélection des variables utiles')
-        st.write('- Suppression des doublons suite aux premiers traitements')
+        
+
+        data_container=st.container()
+        with data_container:
+            commentaires,image= st.columns([0.5,1])
+            with commentaires:
+                st.write("- Création d'une variable Cat_CO2 discrète issue de CO2 sur la base des normes suivantes:")       
+            with image:
+                from PIL import Image
+                image0 = Image.open('norm CO2.jpg')
+                st.image(image0,caption='')
+    
+        st.write('- Suppression des doublons suite aux premiers traitements (restent 5 020 lignes)')
+        st.write('- La base après preprocessing est la suivante (les variables CO2 et Cat_CO2 sont les variables à expliquer):')
+       #on définit des couleurs identiques poru les variables semblables
+
+        st.dataframe(df.head())
+
 
     with tab3:
-        st.write('Variable "carburant"')
-
+        commentaires,graphe= st.columns([0.5,1])
+        with commentaires:
+            st.write('Matrice de corrélation:')
+            fig, ax = plt.subplots(figsize = (3, 3))
+            sns.set(font_scale=0.5)
+            sns.heatmap(df.corr(), annot = True, ax = ax, cmap = 'magma');
+            st.pyplot(fig)
+        
+        #with graphe:
+        #   fig, ax = plt.subplots(figsize = (2, 2))
+        #   var2=df.drop(['Cat_CO2','Marque','Carburant','Carrosserie','boite','gamme2'],axis=1)
+        #    st.write(var2.head())
+        #    sns.pairplot(data = var2,
+        #     x_vars = var2.columns,
+        #     y_vars = var2.columns)
+        #    plt.title('Graphique matriciel')
+        #    st.pyplot(fig)
 
 #_______________________________________________________________________________________________________
 #
@@ -743,7 +813,7 @@ def df_res(sfm_train, y_train, pred_train, residus):
 if page == pages[3]:
     st.write('#### Modélisation: Régréssion multiple')
     
-    tab1, tab2, tab3 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples', 'A vous de jouer!'])
+    tab1, tab2 = st.tabs(['Analyse de la variable cible CO₂', 'Régressions multiples'])
     
     with tab1:
         c1, c2 = st.columns((1,1))
@@ -1001,23 +1071,6 @@ if page == pages[3]:
                     df_res(sfm_train, y_train, pred_train, residus)
     
         
-    with tab3:
-        st.markdown("**:blue[1. Premier modèle]**")
-        st.markdown(":blue[Résidus]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(":blue[Metrics]")
-        st.markdown("blablabla et blablabla")
-        st.markdown(' ')
-        
-        st.markdown("**:blue[2. Modèle affiné]**")
-        st.markdown(":blue[Résidus]")
-        st.markdown("reblablabla et reblablabla")
-        st.markdown(":blue[Metrics]")
-        st.markdown("reblablabla et reblablabla")
-        st.markdown(' ')
-        
-
-
 
 #_______________________________________________________________________________________________________
 #
