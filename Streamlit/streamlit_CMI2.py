@@ -51,7 +51,7 @@ with st.sidebar:
 st.sidebar.title('Projet CO2 Predict')    
 pages = ['Accueil','Introduction','Exploration et analyse des données', 
          'Modélisation : Régression multiple', 'Modélisation : Classification', 'Interprétabilité SHAP multi-classes', 
-         "Prévoyez les rejets de CO2 et la classe d'émission de votre véhicule!", 'Conclusion']
+         "Prédictions : Algorithme 'CO₂ Predict'", 'Conclusion']
 
 st.sidebar.markdown('**Sommaire**')
 page = st.sidebar.radio('', pages)
@@ -1592,20 +1592,218 @@ if page == pages[5]:
                     k = k+1
 
 
+#_______________________________________________________________________________________________________
+#
+#                                   Page 6 : Prédictions: Algorithme 'CO₂ Predict' 
+#_______________________________________________________________________________________________________
 
+# Chargement des modèles:
+lr_es = load('lr_es.joblib')
+lr_go = load('lr_go.joblib')
+sfm_es = load('sfm_es.joblib')
+sfm_go = load('sfm_go.joblib')
 
+# ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
 
+if page == pages[6]:
+    st.write("#### Prédictions: Algorithme 'CO₂ Predict'")
+    st.markdown("- Utilisez notre algorithme **'CO₂ Predict'** pour prédire les rejets de CO₂ et la catégorie de pollution de votre véhicule.  \n- Les algoritmes de régression et de classification étant différents, il se peut qu'une prévision de rejets de CO₂ par régréssion ne correspondent pas à la catégorie d'émission prédite par un algoritme de classification.  \n- Prenez du recul sur l'interprétation.")
+    st.write('')
+    st.write('')
+    st.write('')
+    
 
-
-
-
-
-
-
-
-
-
+    donnees, c0, reg_predict, classif_predict, etiquette = st.columns((0.4,0.2,0.6,0.6,0.2))
+    with donnees:
+        # Données:       
+        puissance = st.slider('Puissance (CV):', 40, 540, value = 100)
+        
+        masse = st.slider('Masse (kg):', 900, 3000, step = 10, value = 1500)   
+        
+        marque = st.selectbox("Marque:", df.Marque.unique())
+        
+        carburant = st.selectbox("Carburant:",  ["Essence", "Diesel"])
+        if carburant == "Essence":
+            carburant = "ES"
             
+        else:
+            carburant = "GO"
             
+        carrosserie = st.selectbox("Carrosserie:", df.Carrosserie.unique())
+        
+        boite = st.selectbox("Boite:", ["Manuelle", "Automatique"])
+        if boite == "Manuelle":
+            boite = "M"
+            
+        else:
+            boite = "A"
+            
+        gamme = st.selectbox("Gamme:", df.gamme2.unique())
+        
+        #Création du dataframe avec ces nouvelles données:    
+        dic = {'Marque': marque,
+               'Carburant': carburant,
+               'puiss_max': puissance, 
+               'masse_ordma_min': masse,
+               'Carrosserie': carrosserie,
+               'boite': boite,
+               'gamme2': gamme}
+                    
+        new_car = pd.DataFrame(data = dic, index = ['0'])
+        
+        new_df = df_class.append(dic, ignore_index=True)
+        
+        
+    with reg_predict:
+        #préproceesing régression:  
+        dic_reg = {'Marque': marque,
+                   'puiss_max': puissance, 
+                   'masse_ordma_min': masse,
+                   'Carrosserie': carrosserie,
+                   'boite': boite,
+                   'gamme2': gamme}
+        
+        if carburant == 'ES':
+            new_car = new_car.drop(['Carburant'], axis = 1)
+            df_ES = df[df.Carburant =='ES']
+            df_ES = df_ES.drop(['Carburant', 'CO2', 'Cat_CO2'], axis = 1)
+            df_ES = df_ES.append(dic_reg, ignore_index=True)
             
                 
+        # On sépare les variables numériques et catégorielles
+            var_num_new = df_ES.select_dtypes(exclude = 'object') # On récupère les variables numériques
+            var_cat_new = df_ES.select_dtypes(include = 'object') # On récupère les variables catégorielles 
+        
+        # Labélisation des variables catégorielles par labelencoder:
+            labelencoder = LabelEncoder()
+            var_cat_num = var_cat_new.apply(labelencoder.fit_transform)
+        
+            data_ES = var_num_new.join(var_cat_num)
+        
+            new_car_num = data_ES.loc[[2059]]
+            data_num = data_ES.drop([2059], axis = 0)    
+                
+            target = pd.DataFrame(target_es, index = data_num.index)
+        
+        else:
+            new_car = new_car.drop(['Carburant'], axis = 1)
+            df_GO = df[df.Carburant =='GO']
+            df_GO = df_GO.drop(['Carburant', 'CO2', 'Cat_CO2'], axis = 1)
+            df_GO = df_GO.append(dic_reg, ignore_index=True)
+                        
+            # On sépare les variables numériques et catégorielles
+            var_num_new = df_GO.select_dtypes(exclude = 'object') # On récupère les variables numériques
+            var_cat_new = df_GO.select_dtypes(include = 'object') # On récupère les variables catégorielles 
+            
+            # Labélisation des variables catégorielles par labelencoder:
+            labelencoder = LabelEncoder()
+            var_cat_num = var_cat_new.apply(labelencoder.fit_transform)
+            
+            data_GO = var_num_new.join(var_cat_num)
+            
+            new_car_num = data_GO.loc[[2961]]
+            data_num = data_GO.drop([2961], axis = 0)    
+                    
+            target = pd.DataFrame(target_go, index = data_num.index)
+            
+            
+        X_train, X_test, y_train, y_test = train_test_split(data_num, target, random_state = 123, test_size = 0.2)
+    
+        #Standardisation des valeurs numériques + variables 'Marque' (beaucoup de catégories (>10)):
+        cols = ['puiss_max', 'masse_ordma_min', 'Marque']
+        sc = StandardScaler()
+        X_train[cols] = sc.fit_transform(X_train[cols])
+        new_car_num[cols] = sc.transform(new_car_num[cols])
+    
+
+    
+       
+        if carburant == 'ES':
+            st.markdown("###### Sélectionnez l'algorithme: 👇")
+            choix_lr_pred = st.radio(" ",
+                                     ["Modèle général Essence",
+                                      "Modèle affiné Essence"],
+                                     horizontal=False)
+            
+            if choix_lr_pred == "Modèle général Essence":
+                model = lr_es
+            if choix_lr_pred == "Modèle affiné Essence":
+                model = sfm_es
+                new_car_num = new_car_num[['puiss_max','masse_ordma_min']]
+        
+        else:
+            st.markdown("###### Sélectionnez l'algorithme de régression: 👇")
+            choix_lr_pred_go = st.radio(" ",
+                                        ["Modèle général Diesel",
+                                         "Modèle affiné Diesel"],
+                                        horizontal=False)
+
+            if choix_lr_pred_go == "Modèle général Diesel":
+                model = lr_go
+            if choix_lr_pred_go == "Modèle affiné Diesel":
+                model = sfm_go
+                new_car_num = new_car_num[['masse_ordma_min']]
+    
+        new_car_pred_lr = model.predict(new_car_num)
+        pred_CO2 = new_car_pred_lr[0]
+        st.write('')
+        st.write('')
+        st.write('')
+        st.write('')
+        st.write('Prédictions des rejets de CO₂ (en g/km):') 
+        st.subheader(np.round(pred_CO2,0))    
+        
+        
+        
+    with classif_predict:
+        #préproceesing classification:    
+        # On sépare les variables numériques et catégorielles
+        var_num_new = new_df.select_dtypes(exclude = 'object') # On récupère les variables numériques
+        var_cat_new = new_df.select_dtypes(include = 'object') # On récupère les variables catégorielles
+        
+        var_cat_num1 = pd.get_dummies(var_cat_new, drop_first = True)
+            
+        new_df_enc = var_num_new.join(var_cat_num1)
+        
+        
+        new_car_enc = new_df_enc.loc[[5018]]
+        new_df_enc = new_df_enc.drop([5018], axis = 0)
+        
+        X_train, X_test, y_train, y_test = train_test_split(new_df_enc, target_class,
+                                                            test_size = 0.25,
+                                                            random_state = 2,
+                                                            stratify = target_class)
+        # Les variables numériques doivent être standardisées
+        cols = ['puiss_max', 'masse_ordma_min']
+        sc = StandardScaler()
+        X_train[cols] = sc.fit_transform(X_train[cols])
+        new_car_enc[cols] = sc.transform(new_car_enc[cols])
+        
+        #Prédictions:
+        st.markdown("###### Sélectionnez l'algorithme de classification: 👇")
+        choix_model_pred = st.radio("",
+                                    ["Random Forest optimisé (= le meilleur)",
+                                     "SVM optimisé",
+                                     "KNN optimisé"],
+                                    horizontal=False)
+        
+        if choix_model_pred == "Random Forest optimisé (= le meilleur)":
+            model = model_rf_opt
+        if choix_model_pred == "SVM optimisé":
+            model = model_svm_opt
+        if choix_model_pred == "KNN optimisé":
+            model = model_knn_opt
+    
+        new_car_pred_cat = model.predict(new_car_enc)
+        pred_CO2_cat = new_car_pred_cat[0]
+        st.write('')
+        st.write('')
+        st.write('')
+        st.write("Prédiction de la catégorie d'émission de CO2:")
+        st.subheader(pred_CO2_cat)
+        
+    
+        from PIL import Image
+        image_pred = Image.open('etiquette-energie-voiture.jpg')
+        st.image(image_pred,caption='')
+   
