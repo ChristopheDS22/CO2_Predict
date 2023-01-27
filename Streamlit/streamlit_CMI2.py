@@ -1603,23 +1603,35 @@ lr_go = load('lr_go.joblib')
 sfm_es = load('sfm_es.joblib')
 sfm_go = load('sfm_go.joblib')
 
+#explainer:
+explainer_rf_opt = load('explainer_rf_opt2.joblib')
+#explainer_svm_opt = load('explainer_svm_opt.joblib')
+explainer_knn_opt = load('explainer_knn_opt.joblib')
+
+#explainer_expected_values:
+explainer_rf_opt_exp_val = load('explainer_rf_opt.expected_value.joblib')
+explainer_knn_opt_exp_val = load('explainer_knn.expected_value.joblib')
+explainer_svm_opt_exp_val = load('explainer_svm_opt.expected_value.joblib')
+
+
 # ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
 
 if page == pages[6]:
     st.write("#### Prédictions: Algorithme 'CO₂ Predict'")
     st.markdown("- Utilisez notre algorithme **'CO₂ Predict'** pour prédire les rejets de CO₂ et la catégorie de pollution de votre véhicule.  \n- Les algoritmes de régression et de classification étant différents, il se peut qu'une prévision de rejets de CO₂ par régréssion ne correspondent pas à la catégorie d'émission prédite par un algoritme de classification.  \n- Prenez du recul sur l'interprétation.")
+    st.write('___')
+    st.write("###### Configurez votre véhicule: 👇")
     st.write('')
-    st.write('')
-    st.write('')
-    
 
-    donnees, c0, reg_predict, classif_predict, etiquette = st.columns((0.4,0.2,0.6,0.6,0.2))
-    with donnees:
+
+    c1, c2, c3 = st.columns((1,1,1))
+    with c2:
         # Données:       
-        puissance = st.slider('Puissance (CV):', 40, 540, value = 100)
+        puissance = st.slider('Puissance (CV):', 40, 540, value = 150)
         
-        masse = st.slider('Masse (kg):', 900, 3000, step = 10, value = 1500)   
+        masse = st.slider('Masse (kg):', 900, 3000, value = 1500)  
         
+    with c1:
         marque = st.selectbox("Marque:", df.Marque.unique())
         
         carburant = st.selectbox("Carburant:",  ["Essence", "Diesel"])
@@ -1631,6 +1643,7 @@ if page == pages[6]:
             
         carrosserie = st.selectbox("Carrosserie:", df.Carrosserie.unique())
         
+    with c3:
         boite = st.selectbox("Boite:", ["Manuelle", "Automatique"])
         if boite == "Manuelle":
             boite = "M"
@@ -1652,8 +1665,11 @@ if page == pages[6]:
         new_car = pd.DataFrame(data = dic, index = ['0'])
         
         new_df = df_class.append(dic, ignore_index=True)
-        
-        
+  
+    st.write('___')
+
+
+    reg_predict, classif_predict, SHAP = st.columns((0.45,0.45,1.1))
     with reg_predict:
         #préproceesing régression:  
         dic_reg = {'Marque': marque,
@@ -1789,21 +1805,42 @@ if page == pages[6]:
         
         if choix_model_pred == "Random Forest optimisé (= le meilleur)":
             model = model_rf_opt
+            explainer = explainer_rf_opt
+            expected_values = explainer_rf_opt_exp_val
         if choix_model_pred == "SVM optimisé":
             model = model_svm_opt
+            #explainer = explainer_svm_opt
+            expected_values = explainer_svm_opt_exp_val
         if choix_model_pred == "KNN optimisé":
             model = model_knn_opt
+            explainer = explainer_knn_opt
+            expected_values = explainer_knn_opt_exp_val
     
         new_car_pred_cat = model.predict(new_car_enc)
         pred_CO2_cat = new_car_pred_cat[0]
         st.write('')
         st.write('')
         st.write('')
-        st.write("Prédiction de la catégorie d'émission de CO2:")
+        st.write("Prédiction de la catégorie d'émission de CO₂:")
         st.subheader(pred_CO2_cat)
         
     
         from PIL import Image
         image_pred = Image.open('etiquette-energie-voiture.jpg')
         st.image(image_pred,caption='')
+        
+    with SHAP:
+        shap_values = explainer.shap_values(new_car_enc)
+        
+        st.write("###### Analysez les graphiques suivant pour comprendre les raisons ayant poussées 'CO₂ Predict' à classer votre véhicule dans cette catégorie': 👇")
+        st.write('')
+        st.write('')
+        k = 0
+        liste = ['Catégorie A', 'Catégorie B', 'Catégorie C', 'Catégorie D','Catégorie E','Catégorie F','Catégorie G']
+        for k in range(0,7,1):
+            st.caption(liste[k])
+            st_shap(shap.force_plot(expected_values[k], shap_values[k][0], new_car_enc.iloc[0,:]))
+            k = k+1
+
    
+
