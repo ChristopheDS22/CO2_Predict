@@ -1399,249 +1399,339 @@ if page == pages[5]:
     st.write('')
     st.write('')
 
-    tab1, tab2, tab3 = st.tabs(['Interprétabilité globale', 'Dépendance des variables', 'Interprétabilité locale'])
+    tab1, tab2 = st.tabs(['Interprétabilité globale', 'Interprétabilité locale'])
     
     with tab1:
-        st.write("L'interprétabilité globale permet d'expliquer le fonctionnement du modèle de point de vue général.")
+        st.write("L'interprétabilité globale permet d'expliquer le fonctionnement du modèle de point de vue général à travers 2 graphiques:")
+        
+        choix_plot = st.radio("",
+                              ["summary plot",
+                               "dependance plot"],
+                              horizontal=False)
+        st.write('___')
+       
         c1, c2 = st.columns((0.7, 2))
         
-        with c1:            
-            st.write('')
-            st.markdown("###### Summary plot à afficher: 👇")
-            choix_model_shap = st.radio("",
-                                     ["summary plot global",
-                                      "summary plot par catégorie"],
-                                     horizontal=True)
-            
-            if choix_model_shap == "summary plot par catégorie":
+        with c1:
+            if choix_plot == "summary plot":
+                st.write("Observez, à l'aide de ces graphiques:   \n- les variables les plus importantes (ordre décroissant d'importance) et l'amplitude de leur impact sur du modèle ,   \n- l'importance des variables pour chaque catégorie.")
+                st.write('')
+                st.markdown("###### Summary plot à afficher: 👇")
+                choix_model_shap = st.radio("",
+                                            ["summary plot global",
+                                             "summary plot par catégorie"],
+                                            horizontal=True)
+                
+                if choix_model_shap == "summary plot global":
+                    st.write('')
+                    st.write('')
+                    st.write('')
+                    
+                    
+                if choix_model_shap == "summary plot par catégorie":
+                    st.write('')
+                    st.write('')
+                    st.markdown("###### Catégorie à analyser: 👇")
+                    choix_categorie = st.radio("",
+                                               ["Catégorie A",
+                                                "Catégorie B",
+                                                "Catégorie C",
+                                                "Catégorie D",
+                                                "Catégorie E",
+                                                "Catégorie F",
+                                                "Catégorie G"],
+                                               key = "Summary",
+                                               horizontal=True)
+                    
+            if choix_plot == "dependance plot":
+                st.write("Description de ces graphiques:   \n- l'axe des abscisses x représente la valeur d'une variable 1,   \n- l'axe des odronnées y représente les valeurs de Shapley de cette même variable 1 (une valeur de Shapley élevée tend à l'appartenance de l'observation à cette classe),   \n- les couleurs représente la valeur d'une variable 2.")
+                st.write('')
+                st.write("Observez, à l'aide de ces graphiques, les valeurs des variables 1 et 2:   \n- pour une valeur de Shapley élevée (= appartenance à cette classe),   \n- pour une valeur de Shapley faible (= non-appartenance à cette classe.)")
+                st.write('')
+                
+                            
+                st.write('')
+                st.markdown("###### Dependance plot à afficher: 👇")
+                choix_dependance_shap = st.radio("",
+                                         ["Puissance max vs Masse",
+                                          "Puissance max vs Carburant",
+                                        "Masse vs Carburant",
+                                            "Masse vs Puissance max"],
+                                         horizontal=False)  
                 st.write('')
                 st.write('')
+                
                 st.markdown("###### Catégorie à analyser: 👇")
                 choix_categorie = st.radio("",
-                                     ["Catégorie A",
-                                      "Catégorie B",
-                                      "Catégorie C",
-                                      "Catégorie D",
-                                      "Catégorie E",
-                                      "Catégorie F",
-                                      "Catégorie G"],
-                                     key = "Summary",
-                                     horizontal=True)
+                                           ["Catégorie A",
+                                            "Catégorie B",
+                                            "Catégorie C",
+                                            "Catégorie D",
+                                            "Catégorie E",
+                                            "Catégorie F",
+                                            "Catégorie G"],
+                                           key = "Dependance",
+                                           horizontal=True)
                 
-        with c2:  
-            st.write('')
-            st.write('')
-            st.write('')
-            st.write('')
-            st.write('')
-            st.write('')
-            if choix_model_shap == "summary plot global":
-            # Summary_plot:
-                st_shap(shap.summary_plot(shap_values,
-                              X_test,
-                              plot_type="bar",
-                              class_names = ['A', 'B', 'C', 'D', 'E', 'F','G']))
-                                
-            if choix_model_shap == "summary plot par catégorie":                
-                if choix_categorie == "Catégorie A":
-                    st_shap(shap.summary_plot(shap_values[0],
-                                  X_test,
-                                  feature_names=feats.columns))
+        with c2: 
+            if choix_plot == "summary plot":
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                if choix_model_shap == "summary plot global":
+                    # Summary_plot:
+                        st_shap(shap.summary_plot(shap_values,
+                                                  X_test,
+                                                  plot_type="bar",
+                                                  class_names = ['A', 'B', 'C', 'D', 'E', 'F','G']))
                                     
-                if choix_categorie == "Catégorie B":
-                    st_shap(shap.summary_plot(shap_values[1],
-                                  X_test,
-                                  feature_names=feats.columns))
+                if choix_model_shap == "summary plot par catégorie":                
+                    if choix_categorie == "Catégorie A":
+                        st_shap(shap.summary_plot(shap_values[0],
+                                                  X_test,
+                                                  feature_names=feats.columns))
                                         
-                if choix_categorie == "Catégorie C":
-                    st_shap(shap.summary_plot(shap_values[2],
-                                  X_test,
-                                  feature_names=feats.columns))
-                                    
-                if choix_categorie == "Catégorie D":
-                    st_shap(shap.summary_plot(shap_values[3],
-                                  X_test,
-                                  feature_names=feats.columns))
-                                    
-                if choix_categorie == "Catégorie E":
-                    st_shap(shap.summary_plot(shap_values[4],
-                                  X_test,
-                                  feature_names=feats.columns))
-                                    
-                if choix_categorie == "Catégorie F":
-                    st_shap(shap.summary_plot(shap_values[5],
-                                  X_test,
-                                  feature_names=feats.columns))
-                                    
-                if choix_categorie == "Catégorie G":
-                    st_shap(shap.summary_plot(shap_values[6],
-                                  X_test,
-                                  feature_names=feats.columns))
-    with tab2:
-        st.write("Analyse de L'interaction des variables influentes 2 à 2")
-        c1, c2 = st.columns((0.7, 2))
-        
-        with c1:            
-            st.write('')
-            st.markdown("###### Dependance plot à afficher: 👇")
-            choix_dependance_shap = st.radio("",
-                                     ["Puissance max vs Masse",
-                                      "Puissance max vs Carburant",
-                                      "Masse vs Carburant"],
-                                     horizontal=True)    
-            
-            st.markdown("###### Catégorie à analyser: 👇")
-            choix_categorie = st.radio("",
-                                     ["Catégorie A",
-                                      "Catégorie B",
-                                      "Catégorie C",
-                                      "Catégorie D",
-                                      "Catégorie E",
-                                      "Catégorie F",
-                                      "Catégorie G"],
-                                     key = "Dependance",
-                                     horizontal=True)
+                    if choix_categorie == "Catégorie B":
+                        st_shap(shap.summary_plot(shap_values[1],
+                                                  X_test,
+                                                  feature_names=feats.columns))
+                                            
+                    if choix_categorie == "Catégorie C":
+                        st_shap(shap.summary_plot(shap_values[2],
+                                                  X_test,
+                                                  feature_names=feats.columns))
+                                        
+                    if choix_categorie == "Catégorie D":
+                        st_shap(shap.summary_plot(shap_values[3],
+                                                  X_test,
+                                                  feature_names=feats.columns))
+                                        
+                    if choix_categorie == "Catégorie E":
+                        st_shap(shap.summary_plot(shap_values[4],
+                                                  X_test,
+                                                  feature_names=feats.columns))
+                                        
+                    if choix_categorie == "Catégorie F":
+                        st_shap(shap.summary_plot(shap_values[5],
+                                                  X_test,
+                                                  feature_names=feats.columns))
+                                        
+                    if choix_categorie == "Catégorie G":
+                        st_shap(shap.summary_plot(shap_values[6],
+                                                  X_test,
+                                                  feature_names=feats.columns))
+                        
+            if choix_plot == "dependance plot":        
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
+                st.write('')
                 
-        with c2:  
-            st.write('')
-            st.write('')
-            st.write('')
-            st.write('')
-            st.write('')
-            st.write('')
-            
-            if choix_dependance_shap == "Puissance max vs Masse":
-                if choix_categorie == "Catégorie A":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[0], 
-                                                 X_test, 
-                                                 interaction_index= "masse_ordma_min"))                       
-                                                
-                if choix_categorie == "Catégorie B":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[1], 
-                                                 X_test, 
-                                                 interaction_index= "masse_ordma_min"))   
-                    
-                if choix_categorie == "Catégorie C":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[2], 
-                                                 X_test, 
-                                                 interaction_index= "masse_ordma_min"))       
-                    
-                if choix_categorie == "Catégorie D":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[3], 
-                                                 X_test, 
-                                                 interaction_index= "masse_ordma_min")) 
-                    
-                if choix_categorie == "Catégorie E":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[4], 
-                                                 X_test, 
-                                                 interaction_index= "masse_ordma_min"))
-                    
-                if choix_categorie == "Catégorie F":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[5], 
-                                                 X_test, 
-                                                 interaction_index= "masse_ordma_min"))
-                    
-                if choix_categorie == "Catégorie G":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[6], 
-                                                 X_test, 
-                                                 interaction_index= "masse_ordma_min"))
-            
-            
-            if choix_dependance_shap == "Puissance max vs Carburant":
-                if choix_categorie == "Catégorie A":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[0], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))                       
-                                                
-                if choix_categorie == "Catégorie B":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[1], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))   
-                    
-                if choix_categorie == "Catégorie C":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[2], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))       
-                    
-                if choix_categorie == "Catégorie D":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[3], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))   
-                    
-                if choix_categorie == "Catégorie E":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[4], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))
-                                    
-                if choix_categorie == "Catégorie F":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[5], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO")) 
-                    
-                if choix_categorie == "Catégorie G":
-                    st_shap(shap.dependence_plot("puiss_max", 
-                                                 shap_values[6], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))
-                    
-            if choix_dependance_shap == "Masse vs Carburant":
-                if choix_categorie == "Catégorie A":
-                    st_shap(shap.dependence_plot("masse_ordma_min", 
-                                                 shap_values[0], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))                       
-                                                
-                if choix_categorie == "Catégorie B":
-                    st_shap(shap.dependence_plot("masse_ordma_min", 
-                                                 shap_values[1], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))   
-                    
-                if choix_categorie == "Catégorie C":
-                    st_shap(shap.dependence_plot("masse_ordma_min", 
-                                                 shap_values[2], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))       
-                    
-                if choix_categorie == "Catégorie D":
-                    st_shap(shap.dependence_plot("masse_ordma_min", 
-                                                 shap_values[3], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))   
-                    
-                if choix_categorie == "Catégorie E":
-                    st_shap(shap.dependence_plot("masse_ordma_min", 
-                                                 shap_values[4], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))
-                                    
-                if choix_categorie == "Catégorie F":
-                    st_shap(shap.dependence_plot("masse_ordma_min", 
-                                                 shap_values[5], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO")) 
-                    
-                if choix_categorie == "Catégorie G":
-                    st_shap(shap.dependence_plot("masse_ordma_min", 
-                                                 shap_values[6], 
-                                                 X_test, 
-                                                 interaction_index= "Carburant_GO"))     
-        
-        
-    with tab3:
+                if choix_dependance_shap == "Puissance max vs Masse":
+                    if choix_categorie == "Catégorie A":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[0], 
+                                                     X_test, 
+                                                     interaction_index= "masse_ordma_min"))                       
+                                                    
+                    if choix_categorie == "Catégorie B":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[1], 
+                                                     X_test, 
+                                                     interaction_index= "masse_ordma_min"))   
+                        
+                    if choix_categorie == "Catégorie C":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[2], 
+                                                     X_test, 
+                                                     interaction_index= "masse_ordma_min"))       
+                        
+                    if choix_categorie == "Catégorie D":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[3], 
+                                                     X_test, 
+                                                     interaction_index= "masse_ordma_min")) 
+                        
+                    if choix_categorie == "Catégorie E":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[4], 
+                                                     X_test, 
+                                                     interaction_index= "masse_ordma_min"))
+                        
+                    if choix_categorie == "Catégorie F":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[5], 
+                                                     X_test, 
+                                                     interaction_index= "masse_ordma_min"))
+                        
+                    if choix_categorie == "Catégorie G":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[6], 
+                                                     X_test, 
+                                                     interaction_index= "masse_ordma_min"))
+                
+                
+                if choix_dependance_shap == "Puissance max vs Carburant":
+                    if choix_categorie == "Catégorie A":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[0], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO"))                       
+                                                    
+                    if choix_categorie == "Catégorie B":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[1], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO"))   
+                        
+                    if choix_categorie == "Catégorie C":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[2], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO"))       
+                        
+                    if choix_categorie == "Catégorie D":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[3], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO"))   
+                        
+                    if choix_categorie == "Catégorie E":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[4], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO"))
+                                        
+                    if choix_categorie == "Catégorie F":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[5], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO")) 
+                        
+                    if choix_categorie == "Catégorie G":
+                        st_shap(shap.dependence_plot("puiss_max", 
+                                                     shap_values[6], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO"))
+                        
+                if choix_dependance_shap == "Masse vs Carburant":
+                    if choix_categorie == "Catégorie A":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[0], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO"))                       
+                                                    
+                    if choix_categorie == "Catégorie B":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[1], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO"))   
+                        
+                    if choix_categorie == "Catégorie C":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[2], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO"))       
+                        
+                    if choix_categorie == "Catégorie D":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[3], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO"))   
+                        
+                    if choix_categorie == "Catégorie E":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[4], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO"))
+                                        
+                    if choix_categorie == "Catégorie F":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[5], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO")) 
+                        
+                    if choix_categorie == "Catégorie G":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[6], 
+                                                     X_test, 
+                                                     interaction_index= "Carburant_GO")) 
+                        
+                if choix_dependance_shap == "Masse vs Puissance max":
+                    if choix_categorie == "Catégorie A":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[0], 
+                                                     X_test, 
+                                                     interaction_index= "puiss_max"))
+                    if choix_categorie == "Catégorie B":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[1], 
+                                                     X_test, 
+                                                     interaction_index= "puiss_max")) 
+                    if choix_categorie == "Catégorie C":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[2], 
+                                                     X_test, 
+                                                     interaction_index= "puiss_max")) 
+                    if choix_categorie == "Catégorie D":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[3], 
+                                                     X_test, 
+                                                     interaction_index= "puiss_max")) 
+                    if choix_categorie == "Catégorie E":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[4], 
+                                                     X_test, 
+                                                     interaction_index= "puiss_max")) 
+                    if choix_categorie == "Catégorie F":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[5], 
+                                                     X_test, 
+                                                     interaction_index= "puiss_max")) 
+                    if choix_categorie == "Catégorie G":
+                        st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                     shap_values[6], 
+                                                     X_test, 
+                                                     interaction_index= "puiss_max"))
+               
+    with tab2:
         c1, c2  = st.columns((1, 0.1))
         with c1:
             st.write("L'interprétabilité locale permet d'expliquer le fonctionnement du modèle pour une instance.")
@@ -1727,8 +1817,12 @@ if page == pages[5]:
                 st.write('')
                 st.write("###### Vous avez choisi d'analyser ce véhicule:")
                 st.dataframe(df2[df2.index == index])
+                st.write('')
+                st.write('')
+                st.write("Observez, à l'aide de ces graphiques:   \n- quelles variables ont un impact positif (rouge) ou négatif (bleu) sur la prédiction d'appartenance à une classe,   \n- l'amplitude de cet impact.")
+                st.write('')
+                st.write('')
                 j=df2.loc[index].index_shape
-                
                 k = 0
                 liste = ['Catégorie A', 'Catégorie B', 'Catégorie C', 'Catégorie D','Catégorie E','Catégorie F','Catégorie G']
                 for k in range(0,7,1):
@@ -1764,7 +1858,7 @@ explainer_svm_opt_exp_val = load('explainer_svm_opt.expected_value.joblib')
 
 if page == pages[6]:
     st.write("#### Prédictions: Algorithme 'CO₂ Predict'")
-    st.markdown("- Utilisez notre algorithme **'CO₂ Predict'** pour prédire les rejets de CO₂ et la catégorie de pollution de votre véhicule.  \n- Les algoritmes de régression et de classification étant différents, il se peut qu'une prévision de rejets de CO₂ par régression ne correspondent pas à la catégorie d'émission prédite par un algoritme de classification.  \n- Prenez du recul sur l'interprétation.")
+    st.markdown("- Utilisez notre algorithme **'CO₂ Predict'** pour prédire les rejets de CO₂ et la catégorie de pollution de votre véhicule.  \n- Les algoritmes de régression et de classification étant différents, il se peut qu'une prévision de rejets de CO₂ par régression ne correspondent pas à la catégorie d'émission prédite par un algoritme de classification.  \n- Choisissez la valeur de chaque variable avec cohérence et prenez du recul sur l'interprétation.")
     st.write('___')
     st.write("###### Configurez votre véhicule: 👇")
     st.write('')
@@ -1841,9 +1935,9 @@ if page == pages[6]:
             var_cat_num = var_cat_new.apply(labelencoder.fit_transform)
         
             data_ES = var_num_new.join(var_cat_num)
-        
-            new_car_num = data_ES.loc[[2059]]
-            data_num = data_ES.drop([2059], axis = 0)    
+            
+            new_car_num = data_ES.loc[[2057]]
+            data_num = data_ES.drop([2057], axis = 0)    
                 
             target = pd.DataFrame(target_es, index = data_num.index)
         
@@ -1953,14 +2047,16 @@ if page == pages[6]:
             model = model_rf_opt
             explainer = explainer_rf_opt
             expected_values = explainer_rf_opt_exp_val
+            message = "###### Analysez les graphiques suivants pour comprendre les raisons ayant poussé 'CO₂ Predict' à classer votre véhicule dans cette catégorie: 👇"
         if choix_model_pred == "SVM optimisé":
             model = model_svm_opt
-            #explainer = explainer_svm_opt
+            message = "A cause de temps de calcul trop longs, il n'est pas possible d'afficher les force_plots du modèle SVM via cette application."
             expected_values = explainer_svm_opt_exp_val
         if choix_model_pred == "KNN optimisé":
             model = model_knn_opt
             explainer = explainer_knn_opt
             expected_values = explainer_knn_opt_exp_val
+            message = "###### Analysez les graphiques suivants pour comprendre les raisons ayant poussé 'CO₂ Predict' à classer votre véhicule dans cette catégorie: 👇"
     
         new_car_pred_cat = model.predict(new_car_enc)
         pred_CO2_cat = new_car_pred_cat[0]
@@ -1976,17 +2072,30 @@ if page == pages[6]:
         st.image(image_pred,caption='')
         
     with SHAP:
-        shap_values = explainer.shap_values(new_car_enc)
         
-        st.write("###### Analysez les graphiques suivant pour comprendre les raisons ayant poussées 'CO₂ Predict' à classer votre véhicule dans cette catégorie': 👇")
+        
+        st.write(message)
         st.write('')
         st.write('')
-        k = 0
-        liste = ['Catégorie A', 'Catégorie B', 'Catégorie C', 'Catégorie D','Catégorie E','Catégorie F','Catégorie G']
-        for k in range(0,7,1):
-            st.caption(liste[k])
-            st_shap(shap.force_plot(expected_values[k], shap_values[k][0], new_car_enc.iloc[0,:]))
-            k = k+1
+        if choix_model_pred == "Random Forest optimisé (= le meilleur)" or choix_model_pred == "KNN optimisé":
+            shap_values = explainer.shap_values(new_car_enc)
+            k = 0
+            liste = ['Catégorie A', 'Catégorie B', 'Catégorie C', 'Catégorie D','Catégorie E','Catégorie F','Catégorie G']
+            for k in range(0,7,1):
+                st.caption(liste[k])
+                st_shap(shap.force_plot(expected_values[k], shap_values[k][0], new_car_enc.iloc[0,:]))
+                k = k+1
 
-   
+
+
+
+# ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
+
+if page == pages[7]:
+    st.write("#### Conclusion")
+    st.write("Les algorithmes, aussi puissants soient-ils, ne nous donnent qu’un résultat de prédiction, ce qui suscite beaucoup de questions sur leurs utilisations (éthique, juridique, bonne prise de décision, etc…). Comment avoir réellement confiance en ces prédictions ? Les méthodes d’interprétabilité et d’explicabilité de ces modèles, telles que SHAP ou LIME, répondent, en partie, à ces interrogations.  Elles apportent confiance et transparence. Les modèles de Machine Learning (ML) et Deep Learning (DL) sont souvent décrits comme des « boîtes noires ». Ces méthodes allument la lumière de ces boîtes noires. Comprendre le fonctionnement d’un modèle dans sa globalité et les causes d’une prédiction constituent une étape cruciale dans l’acceptation, le déploiement, l’utilisation, la connaissance des limites  des modèles de ML et DL. L’interprétabilité apporte du sens à la modélisation.")
+    st.write("Cependant, ces outils ont aussi des inconvénients. Pour la méthode SHAP utilisée dans ce projet, le temps de calcul de cet algorithme sur le jeu de test (1255 observations – 66  variables) pouvait atteindre plus de 20h pour les modèles SVM et KNN!  Cette contrainte a été compensée en échantillonnant 75 observations, dégradant malheureusement la qualité de l’interprétabilité. De plus, l’interprétabilité d’une nouvelle observation nous oblige à relancer ces calculs, couteux en temps et énergie.")
+    st.write("Bien que la méthode SHAP constitue une aide indispensable à la prise de décision, celle-ci n’échappe pas aux compromis.")
+    st.write("Plus généralement, il faut prêter une attention particulière à la valeur de chaque variable choisie pour calculer une prédiction. Un modèle calculera, affichera une prédiction quelles que soient ses entrées, vous montrera les graphiques d’interprétabilité. Il est par exemple possible de calculer une prédiction de rejets de CO2 pour une Bentley, minibus, de 70 CV, 2900 kg, à moteur essence, en boite manuelle et de gamme luxe. Même si l’évocation de ce véhicule prête à sourire, ‘CO2 Predict’ calcule les émissions, la catégorie de pollution et vous donne les raisons de ce classement. Or, ce type de véhicule n’a aucun sens. La responsabilité de l’utilisateur tient notamment dans la cohérence des valeurs de chaque variable. Le résultat d’une prédiction n’exclut pas le bon sens ! La place de l’humain reste centrale dans cette univers ‘data’.")
+    st.write("Ce projet de prédiction des rejets de CO2 nous a permis de mettre moins en avant une qualité de prédiction par l’utilisation de modèles de ML qu’une présentation, non exhaustive, de l’utilité de l’interprétabilité de ces modèles.")
 
