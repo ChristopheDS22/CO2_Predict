@@ -1823,5 +1823,16 @@ if page == pages[6]:
             st_shap(shap.force_plot(expected_values[k], shap_values[k][0], new_car_enc.iloc[0,:]))
             k = k+1
 
-   
+
+
+
+# ANIMATION STREAMLIT------------------------------------------------------------------------------------------------------------------------------
+
+if page == pages[7]:
+    st.write("#### Conclusion")
+    st.write("Les algorithmes, aussi puissants soient-ils, ne nous donnent qu’un résultat de prédiction, ce qui suscite beaucoup de questions sur leurs utilisations (éthique, juridique, bonne prise de décision, etc…). Comment avoir réellement confiance en ces prédictions ? Les méthodes d’interprétabilité et d’explicabilité de ces modèles, telles que SHAP ou LIME, répondent, en partie, à ces interrogations.  Elles apportent confiance et transparence. Les modèles de Machine Learning (ML) et Deep Learning (DL) sont souvent décrits comme des « boîtes noires ». Ces méthodes allument la lumière de ces boîtes noires. Comprendre le fonctionnement d’un modèle dans sa globalité et les causes d’une prédiction constituent une étape cruciale dans l’acceptation, le déploiement, l’utilisation, la connaissance des limites  des modèles de ML et DL. L’interprétabilité apporte du sens à la modélisation.")
+    st.write("Cependant, ces outils ont aussi des inconvénients. Pour la méthode SHAP utilisée dans ce projet, le temps de calcul de cet algorithme sur le jeu de test (1255 observations – 66  variables) pouvait atteindre plus de 20h pour les modèles SVM et KNN!  Cette contrainte a été compensée en échantillonnant 75 observations, dégradant malheureusement la qualité de l’interprétabilité. De plus, l’interprétabilité d’une nouvelle observation nous oblige à relancer ces calculs, couteux en temps et énergie.")
+    st.write("Bien que la méthode SHAP constitue une aide indispensable à la prise de décision, celle-ci n’échappe pas aux compromis.")
+    st.write("Plus généralement, il faut prêter une attention particulière à la valeur de chaque variable choisie pour calculer une prédiction. Un modèle calculera, affichera une prédiction quelles que soient ses entrées, vous montrera les graphiques d’interprétabilité. Il est par exemple possible de calculer une prédiction de rejets de CO2 pour une Bentley, minibus, de 70 CV, 2900 kg, à moteur essence, en boite manuelle et de gamme luxe. Même si l’évocation de ce véhicule prête à sourire, ‘CO2 Predict’ calcule les émissions, la catégorie de pollution et vous donne les raisons de ce classement. Or, ce type de véhicule n’a aucun sens. La responsabilité de l’utilisateur tient notamment dans la cohérence des valeurs de chaque variable. Le résultat d’une prédiction n’exclut pas le bon sens ! La place de l’humain reste centrale dans cette univers ‘data’.")
+    st.write("Ce projet de prédiction des rejets de CO2 nous a permis de mettre moins en avant une qualité de prédiction par l’utilisation de modèles de ML qu’une présentation, non exhaustive, de l’utilité de l’interprétabilité.")
 
