@@ -1727,8 +1727,12 @@ if page == pages[5]:
                 st.write('')
                 st.write("###### Vous avez choisi d'analyser ce véhicule:")
                 st.dataframe(df2[df2.index == index])
+                st.write('')
+                st.write('')
+                st.write("Observez, à l'aide de ces graphiques:   \n- quelles variables ont un impact positif (rouge) ou négatif (bleu) sur la prédiction d'appartenance à une classe,   \n- l'amplitude de cette impact.")
+                st.write('')
+                st.write('')
                 j=df2.loc[index].index_shape
-                
                 k = 0
                 liste = ['Catégorie A', 'Catégorie B', 'Catégorie C', 'Catégorie D','Catégorie E','Catégorie F','Catégorie G']
                 for k in range(0,7,1):
@@ -1953,7 +1957,7 @@ if page == pages[6]:
             model = model_rf_opt
             explainer = explainer_rf_opt
             expected_values = explainer_rf_opt_exp_val
-            message = "###### Analysez les graphiques suivant pour comprendre les raisons ayant poussées 'CO₂ Predict' à classer votre véhicule dans cette catégorie': 👇"
+            message = "###### Analysez les graphiques suivants pour comprendre les raisons ayant poussé 'CO₂ Predict' à classer votre véhicule dans cette catégorie: 👇"
         if choix_model_pred == "SVM optimisé":
             model = model_svm_opt
             message = "A cause de temps de calcul trop longs, il n'est pas possible d'afficher les force_plots du modèle SVM via cette application."
@@ -1962,7 +1966,7 @@ if page == pages[6]:
             model = model_knn_opt
             explainer = explainer_knn_opt
             expected_values = explainer_knn_opt_exp_val
-            message = "###### Analysez les graphiques suivant pour comprendre les raisons ayant poussées 'CO₂ Predict' à classer votre véhicule dans cette catégorie': 👇"
+            message = "###### Analysez les graphiques suivants pour comprendre les raisons ayant poussé 'CO₂ Predict' à classer votre véhicule dans cette catégorie: 👇"
     
         new_car_pred_cat = model.predict(new_car_enc)
         pred_CO2_cat = new_car_pred_cat[0]
