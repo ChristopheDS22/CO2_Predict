@@ -1841,9 +1841,9 @@ if page == pages[6]:
             var_cat_num = var_cat_new.apply(labelencoder.fit_transform)
         
             data_ES = var_num_new.join(var_cat_num)
-        
-            new_car_num = data_ES.loc[[2059]]
-            data_num = data_ES.drop([2059], axis = 0)    
+            
+            new_car_num = data_ES.loc[[2057]]
+            data_num = data_ES.drop([2057], axis = 0)    
                 
             target = pd.DataFrame(target_es, index = data_num.index)
         
