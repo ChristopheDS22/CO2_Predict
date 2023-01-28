@@ -1403,6 +1403,8 @@ if page == pages[5]:
     
     with tab1:
         st.write("L'interprétabilité globale permet d'expliquer le fonctionnement du modèle de point de vue général.")
+        st.write("Observez, à l'aide de ces graphiques:   \n- les variables les plus importantes (ordre décroissant d'importance) et l'amplitude de leur impact sur du modèle ,   \n- l'importance des variables pour chaque catégorie.")
+        
         c1, c2 = st.columns((0.7, 2))
         
         with c1:            
@@ -1412,6 +1414,12 @@ if page == pages[5]:
                                      ["summary plot global",
                                       "summary plot par catégorie"],
                                      horizontal=True)
+            
+            if choix_model_shap == "summary plot global":
+                st.write('')
+                st.write('')
+                st.write('')
+
             
             if choix_model_shap == "summary plot par catégorie":
                 st.write('')
@@ -1436,7 +1444,7 @@ if page == pages[5]:
             st.write('')
             st.write('')
             if choix_model_shap == "summary plot global":
-            # Summary_plot:
+                # Summary_plot:
                 st_shap(shap.summary_plot(shap_values,
                               X_test,
                               plot_type="bar",
