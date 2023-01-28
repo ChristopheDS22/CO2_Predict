@@ -1440,9 +1440,6 @@ if page == pages[5]:
             st.write('')
             st.write('')
             st.write('')
-            st.write('')
-            st.write('')
-            st.write('')
             if choix_model_shap == "summary plot global":
                 # Summary_plot:
                 st_shap(shap.summary_plot(shap_values,
@@ -1486,7 +1483,11 @@ if page == pages[5]:
                                   X_test,
                                   feature_names=feats.columns))
     with tab2:
-        st.write("Analyse de L'interaction des variables influentes 2 à 2")
+        st.write("Description de ces graphiques:   \n- l'axe des abscisses x représente la valeur d'une variable 1,   \n- l'axe des odronnées y représente les valeurs de Shapley de cette même variable 1 (une valeur de Shapley élevée tend à l'appartenance de l'observation à cette classe),   \n- les couleurs représente la valeur d'une variable 2.")
+        st.write('')
+        st.write("Observez, à l'aide de ces graphiques, les valeurs des variables 1 et 2:   \n- pour une valeur de Shapley élevée (= appartenance à cette classe),   \n- pour une valeur de Shapley faible (= non-appartenance à cette classe.)")
+        st.write('')
+        
         c1, c2 = st.columns((0.7, 2))
         
         with c1:            
@@ -1495,8 +1496,11 @@ if page == pages[5]:
             choix_dependance_shap = st.radio("",
                                      ["Puissance max vs Masse",
                                       "Puissance max vs Carburant",
-                                      "Masse vs Carburant"],
-                                     horizontal=True)    
+                                      "Masse vs Carburant",
+                                      "Masse vs Puissance max"],
+                                     horizontal=False)  
+            st.write('')
+            st.write('')
             
             st.markdown("###### Catégorie à analyser: 👇")
             choix_categorie = st.radio("",
@@ -1511,10 +1515,6 @@ if page == pages[5]:
                                      horizontal=True)
                 
         with c2:  
-            st.write('')
-            st.write('')
-            st.write('')
-            st.write('')
             st.write('')
             st.write('')
             
@@ -1646,9 +1646,47 @@ if page == pages[5]:
                     st_shap(shap.dependence_plot("masse_ordma_min", 
                                                  shap_values[6], 
                                                  X_test, 
-                                                 interaction_index= "Carburant_GO"))     
-        
-        
+                                                 interaction_index= "Carburant_GO")) 
+                    
+            if choix_dependance_shap == "Masse vs Puissance max":
+                if choix_categorie == "Catégorie A":
+                    st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                 shap_values[0], 
+                                                 X_test, 
+                                                 interaction_index= "puiss_max"))
+                if choix_categorie == "Catégorie B":
+                    st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                 shap_values[1], 
+                                                 X_test, 
+                                                 interaction_index= "puiss_max")) 
+                if choix_categorie == "Catégorie C":
+                    st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                 shap_values[2], 
+                                                 X_test, 
+                                                 interaction_index= "puiss_max")) 
+                if choix_categorie == "Catégorie D":
+                    st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                 shap_values[3], 
+                                                 X_test, 
+                                                 interaction_index= "puiss_max")) 
+                if choix_categorie == "Catégorie E":
+                    st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                 shap_values[4], 
+                                                 X_test, 
+                                                 interaction_index= "puiss_max")) 
+                if choix_categorie == "Catégorie F":
+                    st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                 shap_values[5], 
+                                                 X_test, 
+                                                 interaction_index= "puiss_max")) 
+                if choix_categorie == "Catégorie G":
+                    st_shap(shap.dependence_plot("masse_ordma_min", 
+                                                 shap_values[6], 
+                                                 X_test, 
+                                                 interaction_index= "puiss_max"))                      
+                    
+                    
+                           
     with tab3:
         c1, c2  = st.columns((1, 0.1))
         with c1:
