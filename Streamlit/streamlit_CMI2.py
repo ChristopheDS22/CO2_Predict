@@ -1090,7 +1090,7 @@ if page == pages[3]:
 #_______________________________________________________________________________________________________
 
 # CHARGEMENT DES JEUX DE DONNEES NETTOYES ET DES TARGETS CORRESPONDANTES: ------------------------------
-df = pd.read_csv('Model_C02.csv', index_col = 0)
+df = pd.read_csv('df.csv', index_col = 0)
 
 ## Matrice de confusion de chaque modèle:
 matrix_rf = load('matrice_rf.joblib')
@@ -1126,18 +1126,6 @@ data = var_num.join(var_cat_ind)
 
 # FONCTIONS: ----------------------------------------------------------------------------
 
-
-def classification(model, X_train, y_train, X_test, y_test):
-            
-    # Entraînement et prédictions:
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test) # Prédictions sur les valeurs de test
-    
-    # Evaluation
-    score = accuracy_score(y_test, y_pred)
-        
-    return [y_pred, score]
-
 # Fonction pour afficher les 3 matrices de confusion des 3 modèles optimisés:
 def matrice(matrice, titre):
     classes = ['A','B','C','D','E','F','G']
@@ -1152,20 +1140,6 @@ def matrice(matrice, titre):
         plt.text(j, i, matrice[i, j],
                  horizontalalignment="center",
                  color="white" if (matrice[i, j] > ( matrice.max() / 2) or matrice[i, j] == 0) else "black")
-    plt.ylabel('Catégories réelles')
-    plt.xlabel('Catégories prédites')
-    st.pyplot()
-    
-def report(rapport, titre):
-    classes = ['A','B','C','D','E','F','G']
-    plt.imshow(rapport, interpolation='nearest',cmap='Blues')
-    plt.title(titre)
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes)
-    plt.yticks(tick_marks, classes)
-    plt.grid(False)
-    
-
     plt.ylabel('Catégories réelles')
     plt.xlabel('Catégories prédites')
     st.pyplot()
@@ -1194,19 +1168,26 @@ if page == pages[4]:
     with tab1:
         st.write('#### Revue des données à classifier')
         st.markdown('Le DataFrame utilisé pour la classification multiple comporte : \n')
-        c1, c2 = st.columns((1.5, 1.5))
+        c1, c2, c3 = st.columns((1.5, 1, 0.5))
         
         with c1:
             st.markdown('Les variables catégorielles :\n')
-            st.write(var_cat.head())
-            st.markdown('Les variables numériques :\n')
-            st.write(var_num.head())       
+            st.write(var_cat.head())     
+
         
         with c2:
+            st.markdown('Les variables numériques :\n')
+            st.write(var_num.head())
+        
+        with c3:
             st.markdown('La variable cible :\n')
             st.write(target_class.head())
-            st.markdown('Répartition de la variable cible :')
-            sns.countplot(target_class)
+            
+        c1, c2 = st.columns((1.5,1))
+        
+        with c1:
+            sns.countplot(data = df, x = 'Cat_CO2', order = ('A','B','C','D','E','F','G'))
+            plt.title('Répartition de la variable cible Cat_CO2')
             st.pyplot()
             
     with tab2:
@@ -1218,34 +1199,26 @@ if page == pages[4]:
                            key="visibility",
                            horizontal = True)
         
-        c1, c2, c3 = st.columns((1.2, 1.5, 1.5))
+        c1, c2 = st.columns((1.5, 1.5))
         
         
         if choix_model == 'SVM':
-            model = SVC(gamma = 'scale')
-            model_optim = SVC(C = 200, 
-                              kernel = 'rbf', 
-                              gamma = 0.1) 
+             rapport = rap_svm
+             rapport_optim = rap_svm_opt
+             matrix = matrix_svm
+             matrix_optim = matrix_svm_opt
            
         if choix_model == 'KNN':
-            model = KNeighborsClassifier()
-            model_optim = KNeighborsClassifier(n_neighbors = 1, 
-                                               metric = 'minkowski', 
-                                               leaf_size = 1)
+            rapport = rap_knn
+            rapport_optim = rap_knn_opt
+            matrix = matrix_knn
+            matrix_optim = matrix_knn_opt
             
         if choix_model == 'Random Forest':            
-            model = RandomForestClassifier()
-            model_optim = RandomForestClassifier(n_estimators = 400,
-                                                 criterion = 'gini',
-                                                 max_features = 'sqrt')        
-                   
-        # Prédictions
-        y_pred, score = classification(model, X_train, y_train, X_test, y_test)
-        y_pred_optim, score_optim = classification(model_optim, X_train, y_train, X_test, y_test)
-        
-        #Les matrices de confusion obtenues
-        matrix = confusion_matrix(y_test, y_pred)
-        matrix_optim = confusion_matrix(y_test, y_pred_optim)
+            rapport = rap_rf
+            rapport_optim = rap_rf_opt
+            matrix = matrix_rf
+            matrix_optim = matrix_rf_opt        
         
         fig = plt.figure(figsize = (10,10))
         st.set_option('deprecation.showPyplotGlobalUse', False)
@@ -1257,24 +1230,19 @@ if page == pages[4]:
                             top=0.9,
                             wspace=0.5,
                             hspace=0.4)
+        
         with c1:
-            st.write("##### **Metrics:**")
-            st.write('Le modèle standard a une accuracy de', round(score, 2))        
-            st.write('Le modèle optimisé a une accuracy de', round(score_optim, 2))
-            
-        with c2:
             plt.subplot(121)
-            matrice(matrix, 'Matrice de confusion du modèle standard')
-            st.write('Le rapport de classification standard')
-            st.text(classification_report(y_test, y_pred)) 
+            matrice(matrix, 'Matrice de confusion du modèle '+choix_model+' standard')
+            st.write('Le rapport de classification '+choix_model+' standard')
+            st.text(rapport) 
             
         
-        with c3:
+        with c2:
             plt.subplot(122)
-            matrice(matrix_optim, 'Matrice de confusion du modèle optimisé')
-            st.write('Le rapport de classification optimisée')
-            st.text(classification_report(y_test, y_pred_optim)) 
-                
+            matrice(matrix_optim, 'Matrice de confusion du modèle '+choix_model+' optimisé')
+            st.write('Le rapport de classification '+choix_model+' optimisé')
+            st.text(rapport_optim)                 
         
         
     with tab3:
@@ -1282,24 +1250,24 @@ if page == pages[4]:
         # Affichage et comparaison des 3 matrices de confusion des 3 modèles optimisés
         st.write("Comparaison des matrices de confusion des 3 modèles optimisés \n")
 
-        c1, c2, c3, c4 = st.columns((0.5, 0.5, 0.5, 0.5))
+        c1, c2, c3 = st.columns((1, 1.05, 1))
         with c1:
             # Matrice de confusion du modèle SVM optimisé:
                 plt.subplot(131)
                 matrice(matrix_svm_opt, 'Matrice de confusion du modèle SVM optimisé')
-                st.write(rap_svm_opt)
+                st.text(rap_svm_opt)
 
         with c2:
             # Matrice de confusion du modèle KNN optimisé:
                 plt.subplot(132)
                 matrice(matrix_knn_opt, 'Matrice de confusion du modèle KNN optimisé')
-                st.write(rap_knn_opt)
+                st.text(rap_knn_opt)
 
         with c3:
             # Matrice de confusion du modèle RF optimisé:
                 plt.subplot(133)
                 matrice(matrix_rf_opt, 'Matrice de confusion du modèle RF optimisé')
-                st.write(rap_rf_opt)
+                st.text(rap_rf_opt)
 
 #_______________________________________________________________________________________________________
 #
