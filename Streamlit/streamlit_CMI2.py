@@ -1764,7 +1764,7 @@ explainer_svm_opt_exp_val = load('explainer_svm_opt.expected_value.joblib')
 
 if page == pages[6]:
     st.write("#### Prédictions: Algorithme 'CO₂ Predict'")
-    st.markdown("- Utilisez notre algorithme **'CO₂ Predict'** pour prédire les rejets de CO₂ et la catégorie de pollution de votre véhicule.  \n- Les algoritmes de régression et de classification étant différents, il se peut qu'une prévision de rejets de CO₂ par régression ne correspondent pas à la catégorie d'émission prédite par un algoritme de classification.  \n- Prenez du recul sur l'interprétation.")
+    st.markdown("- Utilisez notre algorithme **'CO₂ Predict'** pour prédire les rejets de CO₂ et la catégorie de pollution de votre véhicule.  \n- Les algoritmes de régression et de classification étant différents, il se peut qu'une prévision de rejets de CO₂ par régression ne correspondent pas à la catégorie d'émission prédite par un algoritme de classification.  \n- Choisissez la valeur de chaque variable avec cohérence et prenez du recul sur l'interprétation.")
     st.write('___')
     st.write("###### Configurez votre véhicule: 👇")
     st.write('')
@@ -1953,14 +1953,16 @@ if page == pages[6]:
             model = model_rf_opt
             explainer = explainer_rf_opt
             expected_values = explainer_rf_opt_exp_val
+            message = "###### Analysez les graphiques suivant pour comprendre les raisons ayant poussées 'CO₂ Predict' à classer votre véhicule dans cette catégorie': 👇"
         if choix_model_pred == "SVM optimisé":
             model = model_svm_opt
-            #explainer = explainer_svm_opt
+            message = "A cause de temps de calcul trop longs, il n'est pas possible d'afficher les force_plots du modèle SVM via cette application."
             expected_values = explainer_svm_opt_exp_val
         if choix_model_pred == "KNN optimisé":
             model = model_knn_opt
             explainer = explainer_knn_opt
             expected_values = explainer_knn_opt_exp_val
+            message = "###### Analysez les graphiques suivant pour comprendre les raisons ayant poussées 'CO₂ Predict' à classer votre véhicule dans cette catégorie': 👇"
     
         new_car_pred_cat = model.predict(new_car_enc)
         pred_CO2_cat = new_car_pred_cat[0]
@@ -1976,17 +1978,19 @@ if page == pages[6]:
         st.image(image_pred,caption='')
         
     with SHAP:
-        shap_values = explainer.shap_values(new_car_enc)
         
-        st.write("###### Analysez les graphiques suivant pour comprendre les raisons ayant poussées 'CO₂ Predict' à classer votre véhicule dans cette catégorie': 👇")
+        
+        st.write(message)
         st.write('')
         st.write('')
-        k = 0
-        liste = ['Catégorie A', 'Catégorie B', 'Catégorie C', 'Catégorie D','Catégorie E','Catégorie F','Catégorie G']
-        for k in range(0,7,1):
-            st.caption(liste[k])
-            st_shap(shap.force_plot(expected_values[k], shap_values[k][0], new_car_enc.iloc[0,:]))
-            k = k+1
+        if choix_model_pred == "Random Forest optimisé (= le meilleur)" or choix_model_pred == "KNN optimisé":
+            shap_values = explainer.shap_values(new_car_enc)
+            k = 0
+            liste = ['Catégorie A', 'Catégorie B', 'Catégorie C', 'Catégorie D','Catégorie E','Catégorie F','Catégorie G']
+            for k in range(0,7,1):
+                st.caption(liste[k])
+                st_shap(shap.force_plot(expected_values[k], shap_values[k][0], new_car_enc.iloc[0,:]))
+                k = k+1
 
 
 
