@@ -107,15 +107,15 @@ if page == pages[2]:
     st.write('## Exploration et analyse des données')
     
 
-    tab1, tab2, tab3 = st.tabs(['Variables explicatives', 'Preprocessing', 'Liens entre variables'])
+    tab1, tab2, tab3 = st.tabs(['Variables du dataset', 'Preprocessing', 'Liens entre variables'])
     
     with tab1:
  
-        st.write('Deux types de variables explicatives sont disponibles : 11 qualitatives et 13 quantitatives')
+        st.write('Deux types de variables sont disponibles : 11 qualitatives et 13 quantitatives')
         st.write('Le dataset de départ contient 44 850 lignes')
         #st.caption('Certaines variables sont redondantes (colorées de la même façon ci-dessous)')
 
-        st.write('### Variables explicatives')
+        st.write('### Variables du dataset')
  
    
         var_num_2013 = df_2013.select_dtypes(exclude = 'object') # On récupère les variables numériques
@@ -176,7 +176,7 @@ if page == pages[2]:
                 st.write(' ')
                 st.write(' ')
                 st.write(' ')
-                st.write('La variable carburant possède un grand nombre de modalités."Essence" et "Gasole" représentent plus de 99 % du portefeuille, on ne conserve donc que ces deux modalités ')
+                st.write('La variable carburant possède un grand nombre de modalités."Essence (ES)" et "Gasole (GO)" représentent plus de 99 % du portefeuille, on ne conserve donc que ces deux modalités ')
             with plot1:
                 st.plotly_chart(fig1, use_container_width=True)
             with plot2:
@@ -2072,7 +2072,7 @@ if page == pages[6]:
     
         from PIL import Image
         image_pred = Image.open('etiquette-energie-voiture.jpg')
-        st.image(image_pred,caption='')
+        st.image(image_pred,caption='', width=300)
         
     with SHAP:
         
