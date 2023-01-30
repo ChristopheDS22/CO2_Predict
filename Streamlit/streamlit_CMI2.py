@@ -95,7 +95,7 @@ if page == pages[1]:
     
     st.write('###### Objectifs :  \n- Identifier les véhicules qui émettent le plus de CO2 est important pour identifier les caractéristiques techniques qui jouent un rôle dans la pollution.  \n- Prédire à l’avance cette pollution permet de prévenir dans le cas de l’apparition de nouveaux types de véhicules (nouvelles séries de voitures par exemple')
     st.markdown('Le projet est effectué à partir du dataset regroupant les émissions de CO2 et polluants des véhicules commercialisées en France en 2013')
-    st.markdown('[Source du dataset]( https://www.ecologie.gouv.fr/normes-euros-demissions-polluants-vehicules-lourds-vehicules-propres)')
+    st.markdown('[Source du dataset]( https://www.data.gouv.fr/fr/datasets/emissions-de-co2-et-de-polluants-des-vehicules-commercialises-en-france/#_)')
        
     st.write('### Visualisation du dataset')
     st.dataframe(df_2013.head())
@@ -855,9 +855,10 @@ if page == pages[3]:
                 
                 # Histogramme de distribution:
                 plt.hist(dist, bins=60, density=True, rwidth = 0.8, color='steelblue')
-                plt.title('Histogramme de CO₂ (g/km)')
+                plt.title('Histogramme de CO2 (g/km)')
                 plt.xlim(0,400)
-                plt.xlabel('CO₂ (g/km)')
+                plt.xlabel('CO2 (g/km)')
+                plt.yticks([])
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 
                 # Représentation de la loi normale avec la moyenne et l'écart-type de la distribution -
@@ -875,7 +876,7 @@ if page == pages[3]:
                 plt.subplot(212)
                 sns.boxplot(x=dist.CO2, notch=True)
                 plt.title('Boite à moustache de CO2 (g/km)')
-                plt.xlabel('CO₂ (g/km)')
+                plt.xlabel('CO2 (g/km)')
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 plt.xlim(0,400)
                 
@@ -910,8 +911,9 @@ if page == pages[3]:
                          color='orange',
                          label ='Distribution des véhicules diesel')
                 
-                plt.title('Histogramme de CO₂ (g/km) en fonction du carburant')
-                plt.xlabel('CO₂ (g/km)')
+                plt.title('Histogramme de CO2 (g/km) en fonction du carburant')
+                plt.xlabel('CO2 (g/km)')
+                plt.yticks([])
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 plt.legend()
                 
@@ -942,7 +944,8 @@ if page == pages[3]:
                 plt.plot((GO.mean(), GO.mean()), (0, 0.015), 'y', lw=1.5, label = 'moyenne de la distribution GO')
                 plt.plot((GO.median(), GO.median()), (0, 0.015), 'y--', lw=1.5, label = 'médiane de la distribution GO')
                 plt.title('Représentation des lois normales des distributions des véhicules essence et diesel suivant leurs moyennes et écarts-types')
-                plt.xlabel('CO₂ (g/km)')
+                plt.xlabel('CO2 (g/km)')
+                plt.yticks([])
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 plt.legend()
                 
@@ -950,8 +953,8 @@ if page == pages[3]:
                 plt.subplot(313)
                 sns.boxplot(data = df, y = 'Carburant' , x = 'CO2', palette = ['green','gold'], notch=True)
                 plt.xticks(rotation = 'vertical')
-                plt.title('Boite à moustache de CO₂ (g/km) en fonction du type de carburant')
-                plt.xlabel('CO₂ (g/km)')
+                plt.title('Boite à moustache de CO2 (g/km) en fonction du type de carburant')
+                plt.xlabel('CO2 (g/km)')
                 plt.xlim(0,400)
                 plt.grid(linestyle = ':', c = 'g', alpha = 0.3)
                 
