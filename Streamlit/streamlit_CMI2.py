@@ -111,7 +111,7 @@ if page == pages[2]:
     
     with tab1:
  
-        st.write('Deux types de variables sont disponibles : 11 qualitatives et 13 quantitatives')
+        st.write('Deux types de variables sont disponibles : 13 qualitatives et 13 quantitatives')
         st.write('Le dataset de départ contient 44 850 lignes')
         #st.caption('Certaines variables sont redondantes (colorées de la même façon ci-dessous)')
 
@@ -1447,7 +1447,7 @@ if page == pages[5]:
                                                horizontal=True)
                     
             if choix_plot == "dependance plot":
-                st.write("Description de ces graphiques:   \n- l'axe des abscisses x représente la valeur d'une variable 1,   \n- l'axe des odronnées y représente les valeurs de Shapley de cette même variable 1 (une valeur de Shapley élevée tend à l'appartenance de l'observation à cette classe),   \n- les couleurs représente la valeur d'une variable 2.")
+                st.write("Description de ces graphiques:   \n- l'axe des abscisses x représente la valeur d'une variable 1,   \n- l'axe des odronnées y représente les valeurs de Shapley de cette même variable 1 (une valeur de Shapley élevée tend à l'appartenance de l'observation à cette classe),   \n- les couleurs représentent la valeur d'une variable 2.")
                 st.write('')
                 st.write("Observez, à l'aide de ces graphiques, les valeurs des variables 1 et 2:   \n- pour une valeur de Shapley élevée (= appartenance à cette classe),   \n- pour une valeur de Shapley faible (= non-appartenance à cette classe.)")
                 st.write('')
@@ -1868,12 +1868,6 @@ if page == pages[6]:
 
 
     c1, c2, c3 = st.columns((1,1,1))
-    with c2:
-        # Données:       
-        puissance = st.slider('Puissance (CV):', 40, 540, value = 150)
-        
-        masse = st.slider('Masse (kg):', 900, 3000, value = 1500)  
-        
     with c1:
         marque = st.selectbox("Marque:", df.Marque.unique())
         
@@ -1885,6 +1879,15 @@ if page == pages[6]:
             carburant = "GO"
             
         carrosserie = st.selectbox("Carrosserie:", df.Carrosserie.unique())
+        
+    with c2:
+        # Données:       
+        puissance = st.slider('Puissance (CV):', 40, 540, value = 150)
+        
+        masse = st.slider('Masse (kg):', 900, 3000, value = 1500)  
+        
+        
+
         
     with c3:
         boite = st.selectbox("Boite:", ["Manuelle", "Automatique"])
@@ -1908,6 +1911,14 @@ if page == pages[6]:
         new_car = pd.DataFrame(data = dic, index = ['0'])
         
         new_df = df_class.append(dic, ignore_index=True)
+        
+    st.write(' ')
+    if carburant == "ES":
+        st.write("L'algorithme a été entrainé sur un dataset dont les limites pour les variables 'Puissance' et 'Masse' des véhicules essence sont:   \n- 44 CV < puissance < 540 CV,   \n- 825 kg < masse < 3115 kg")
+    
+    if carburant == "GO":
+        st.write("L'algorithme a été entrainé sur un dataset dont les limites pour les variables 'Puissance' et 'Masse' des véhicules diesel sont:   \n- 40 CV < puissance < 280 CV,   \n- 845 kg < masse < 2680 kg")
+
   
     st.write('___')
 
