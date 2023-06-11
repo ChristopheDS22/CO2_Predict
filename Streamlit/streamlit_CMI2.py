@@ -111,7 +111,7 @@ if page == pages[2]:
     
     with tab1:
  
-        st.write('Deux types de variables sont disponibles : 11 qualitatives et 13 quantitatives')
+        st.write('Deux types de variables sont disponibles : 13 qualitatives et 13 quantitatives')
         st.write('Le dataset de départ contient 44 850 lignes')
         #st.caption('Certaines variables sont redondantes (colorées de la même façon ci-dessous)')
 
